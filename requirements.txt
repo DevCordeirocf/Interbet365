@@ -6,3 +6,5 @@ bcrypt
 mercadopago
 pydantic
 flask
+pytest
+python-dotenv
