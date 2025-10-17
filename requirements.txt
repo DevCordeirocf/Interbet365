@@ -1,0 +1,8 @@
+streamlit
+streamlit-option-menu
+supabase
+psycopg2-binary
+bcrypt
+mercadopago
+pydantic
+flask
