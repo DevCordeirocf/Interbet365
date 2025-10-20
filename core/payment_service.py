@@ -22,10 +22,10 @@ def get_mp_sdk():
         env = st.secrets.get("environment", "test")
 
         if env == "prod":
-            access_token = st.secrets["mp_access_token_prod"]
+            access_token = st.secrets["MP_ACCESS_TOKEN_PROD"]
             print("SDK do Mercado Pago inicializado em modo PRODUÇÃO.")
         else:
-            access_token = st.secrets["mp_access_token_test"]
+            access_token = st.secrets["MP_ACCESS_TOKEN_TEST"]
             print("SDK do Mercado Pago inicializado em modo TESTE.")
             
         sdk = mercadopago.SDK(access_token)
@@ -49,7 +49,7 @@ def create_payment_preference(username: str, user_id: int, amount: float) -> dic
     # ==============================================================================
     # 1. NGROK URL: A URL base gerada pelo NGROK.
     #    Ela será usada tanto para o webhook quanto para o redirecionamento.
-    ngrok_base_url = "https://76963c952e60.ngrok-free.app" # SEM a barra no final
+    ngrok_base_url = "https://27c33be09c45.ngrok-free.app" # SEM a barra no final
 
     # 2. Monta as URLs completas
     webhook_url = f"{ngrok_base_url}/webhook/mercado-pago"
