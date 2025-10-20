@@ -4,10 +4,71 @@ import os
 import mercadopago
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
+# Carrega as variáveis de ambiente do arquivo .env (MP_ACCESS_TOKEN, SUPABASE_URL, etc.)
 load_dotenv()
 
-# ... (sua função de placeholder do banco de dados) ...
+# ==============================================================================
+# LÓGICA DE BANCO DE DADOS (Específica para o Servidor Webhook)
+# ==============================================================================
+
+def init_supabase_client() -> Client | None:
+    """Inicializa e retorna o cliente Supabase usando credenciais do .env."""
+    try:
+        url = os.getenv("SUPABASE_URL")
+        # Usamos a SERVICE_KEY aqui porque o webhook precisa de permissões de admin
+        # para ignorar o RLS e atualizar o saldo de qualquer usuário.
+        key = os.getenv("SUPABASE_SERVICE_KEY")
+
+        if not url or not key:
+            print("ERRO DO WEBHOOK: Credenciais do Supabase não encontradas no arquivo .env")
+            return None
+        return create_client(url, key)
+    except Exception as e:
+        print(f"ERRO DO WEBHOOK ao inicializar cliente Supabase: {e}")
+        return None
+
+def update_database_on_payment(supabase: Client, external_reference: str, amount: float) -> bool:
+    """
+    Atualiza o saldo do usuário no banco de dados após um pagamento aprovado.
+    """
+    print(f"WEBHOOK: Atualizando saldo para a referência: {external_reference}...")
+    try:
+        # Extrai o user_id da referência. O formato é "user_UUID_deposit_TIMESTAMP"
+        parts = external_reference.split('_')
+        if len(parts) < 2 or parts[0] != 'user':
+            print(f"ERRO DO WEBHOOK: A referência externa '{external_reference}' tem um formato inválido.")
+            return False
+        user_id = parts[1]
+
+        # 1. Pega o saldo atual do usuário
+        profile_res = supabase.table('Profiles').select('balance').eq('id', user_id).single().execute()
+        
+        if not profile_res.data:
+            print(f"ERRO DO WEBHOOK: Perfil para o usuário {user_id} não foi encontrado.")
+            return False
+
+        # 2. Calcula o novo saldo
+        current_balance = profile_res.data['balance']
+        new_balance = float(current_balance) + float(amount)
+
+        # 3. Atualiza o saldo na tabela Profiles
+        update_res = supabase.table('Profiles').update({'balance': new_balance}).eq('id', user_id).execute()
+
+        # Opcional: Registra a transação como 'Concluída'
+        # supabase.table('Transactions').update({'status': 'Concluído'}).eq('external_id', payment_id).execute()
+
+        print(f"WEBHOOK: Saldo do usuário {user_id} atualizado para {new_balance} com sucesso!")
+        return True
+        
+    except Exception as e:
+        print(f"ERRO DO WEBHOOK ao executar a atualização do saldo: {e}")
+        return False
+
+# ==============================================================================
+# SERVIDOR FLASK E ENDPOINT DO WEBHOOK
+# ==============================================================================
 
 app = Flask(__name__)
 
@@ -19,18 +80,11 @@ def mercadopago_webhook():
     if notification and notification.get("type") == "payment":
         payment_id = notification["data"]["id"]
         
-        # Pega a configuração do ambiente, default é 'test'
         env = os.getenv("ENVIRONMENT", "test")
-
-        if env == "prod":
-            access_token = os.getenv("MP_ACCESS_TOKEN_PROD")
-            print("Webhook processando com credenciais de PRODUÇÃO.")
-        else:
-            access_token = os.getenv("MP_ACCESS_TOKEN_TEST")
-            print("Webhook processando com credenciais de TESTE.")
+        access_token = os.getenv("MP_ACCESS_TOKEN_PROD") if env == "prod" else os.getenv("MP_ACCESS_TOKEN_TEST")
 
         if not access_token:
-            print("ERRO: Access Token do MP não encontrado nas variáveis de ambiente para o ambiente:", env)
+            print(f"ERRO: Access Token do MP não encontrado para o ambiente: {env}")
             return jsonify({"status": "error", "message": "configuração do servidor incompleta"}), 500
         
         try:
@@ -38,13 +92,19 @@ def mercadopago_webhook():
             payment_info = sdk.payment().get(payment_id)
             payment = payment_info["response"]
 
-            if payment["status"] == "approved":
+            if payment.get("status") == "approved":
+                supabase_client = init_supabase_client()
+                if not supabase_client:
+                    return jsonify({"status": "error", "message": "falha na conexão com o banco de dados"}), 500
+                
                 external_ref = payment.get("external_reference")
                 amount = payment.get("transaction_amount")
-                if external_ref and amount:
-                    # update_database_on_payment(external_ref, amount) # Sua função real
-                    print(f"Pagamento {payment_id} aprovado e processado.")
                 
+                if external_ref and amount:
+                    # ** AQUI ESTÁ A MUDANÇA PRINCIPAL **
+                    # Chamamos a função real que atualiza o banco de dados
+                    update_database_on_payment(supabase_client, external_ref, amount)
+                    
         except Exception as e:
             print(f"Erro ao processar o webhook: {e}")
             return jsonify({"status": "error"}), 500
