@@ -1,12 +1,20 @@
-# views/apostar.py
-
 import streamlit as st
 import datetime
 from core import match_service, bet_service, user_service
+from styles.betting import load_betting_styles, render_match_card, render_confirmation_box
 
 def render():
-    st.title("🏆 Apostar")
-    st.write("Veja as partidas agendadas e faça sua aposta.")
+    load_betting_styles()
+    
+    # Header com estilo novo
+    st.markdown("""
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1>Wyden 365 - Apostas Esportivas</h1>
+            <p style="color: hsl(220 10% 60%); font-size: 1.1rem;">
+                Aposte nos seus times favoritos para vencedor do intercursos!
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
     # --- 1. Busca as partidas do banco de dados ---
     matches = match_service.get_open_matches()
@@ -16,108 +24,186 @@ def render():
         st.stop()
         
     # --- 2. Inicializa o "carrinho de apostas" (bet intent) ---
-    # Isso é para lembrar qual aposta o usuário selecionou
     if 'bet_intent' not in st.session_state:
         st.session_state['bet_intent'] = None
 
     # --- 3. Loop para exibir cada partida ---
+    st.subheader(" Partidas Disponíveis")
+    
     for match in matches:
-        # Extrai os nomes dos times. O 'get' evita erros se o JOIN falhar.
+        # Extrai os nomes dos times
         team_a_name = match.get('team_a', {}).get('name', 'Time A')
         team_b_name = match.get('team_b', {}).get('name', 'Time B')
         
-        st.divider()
-        st.subheader(f"{team_a_name} vs {team_b_name}")
-        st.caption(f"Data: {match['match_datetime']}")
+        # Usa a nova função render_match_card
+        render_match_card(team_a_name, team_b_name, match['match_datetime'])
 
         # Layout dos botões de aposta
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            label_a = f"Vence: {team_a_name} ({match['odds_a']})"
-            if st.button(label_a, key=f"bet_a_{match['id']}", use_container_width=True):
-                # Guarda a intenção de aposta na sessão
+            # Renderiza o botão com HTML customizado para controle total
+            st.markdown(f"""
+                <div class="bet-button-container">
+                    <div class="odds-label"> Casa</div>
+                    <div class="odds-display">{match['odds_a']:.2f}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("Apostar", key=f"bet_a_{match['id']}", use_container_width=True):
                 st.session_state['bet_intent'] = {
                     'match_id': match['id'],
                     'prediction': 'A',
                     'odds': match['odds_a'],
-                    'label': f"Vitória de {team_a_name}"
+                    'label': f"Vitória de {team_a_name}",
+                    'team_a': team_a_name,
+                    'team_b': team_b_name
                 }
-                st.rerun() # Recarrega a página para mostrar o formulário
+                st.rerun()
 
         with col2:
-            label_draw = f"Empate ({match['odds_draw']})"
-            if st.button(label_draw, key=f"bet_draw_{match['id']}", use_container_width=True):
+            st.markdown(f"""
+                <div class="bet-button-container">
+                    <div class="odds-label"> Empate</div>
+                    <div class="odds-display">{match['odds_draw']:.2f}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("Apostar", key=f"bet_draw_{match['id']}", use_container_width=True):
                 st.session_state['bet_intent'] = {
                     'match_id': match['id'],
                     'prediction': 'Empate',
                     'odds': match['odds_draw'],
-                    'label': "Empate"
+                    'label': "Empate",
+                    'team_a': team_a_name,
+                    'team_b': team_b_name
                 }
                 st.rerun()
 
         with col3:
-            label_b = f"Vence: {team_b_name} ({match['odds_b']})"
-            if st.button(label_b, key=f"bet_b_{match['id']}", use_container_width=True):
+            st.markdown(f"""
+                <div class="bet-button-container">
+                    <div class="odds-label"> Fora</div>
+                    <div class="odds-display">{match['odds_b']:.2f}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("Apostar", key=f"bet_b_{match['id']}", use_container_width=True):
                 st.session_state['bet_intent'] = {
                     'match_id': match['id'],
                     'prediction': 'B',
                     'odds': match['odds_b'],
-                    'label': f"Vitória de {team_b_name}"
+                    'label': f"Vitória de {team_b_name}",
+                    'team_a': team_a_name,
+                    'team_b': team_b_name
                 }
                 st.rerun()
 
+        st.markdown("<br>", unsafe_allow_html=True)
+
     # --- 4. Formulário de Confirmação de Aposta ---
-    # Este bloco só aparece APÓS o usuário clicar em uma aposta
     if st.session_state['bet_intent'] is not None:
         
         intent = st.session_state['bet_intent']
         
         # --- 4a. Verifica se o usuário está logado ---
         if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
-            st.warning("Você precisa estar logado para apostar.")
-            if st.button("Ir para o Login"):
-                st.session_state['view'] = 'login' # Muda o estado do Wyden365.py
-                st.session_state['bet_intent'] = None # Limpa a intenção
-                st.rerun()
-            if st.button("Cancelar"):
-                st.session_state['bet_intent'] = None
-                st.rerun()
+            st.warning(" Autenticação Necessária")
+            st.info("Você precisa estar logado para fazer apostas.")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button(" Cancelar", use_container_width=True):
+                    st.session_state['bet_intent'] = None
+                    st.rerun()
+            
+            with col2:
+                if st.button(" Fazer Login", type="primary", use_container_width=True):
+                    st.session_state['view'] = 'login'
+                    st.session_state['bet_intent'] = None
+                    st.rerun()
         
         # --- 4b. Se estiver logado, mostra o formulário ---
         else:
             user_id = st.session_state['user_id']
             balance = user_service.get_user_balance(user_id)
             
-            st.divider()
-            with st.form("bet_confirmation_form", clear_on_submit=True):
-                st.subheader(f"Confirmar Aposta: {intent['label']}")
-                st.write(f"Odds: {intent['odds']}")
-                st.write(f"Seu Saldo: R$ {balance:.2f}")
+            # Usa a nova função render_confirmation_box
+            render_confirmation_box(intent['label'], intent['odds'], balance)
+            
+            # Inicializa o valor da aposta no session_state se não existir
+            if 'bet_amount' not in st.session_state:
+                st.session_state['bet_amount'] = 1.0
+            
+            st.subheader(" Valor da Aposta")
+            
+            # Input com callback para atualização em tempo real
+            amount = st.number_input(
+                "Valor (R$)", 
+                min_value=1.00,
+                max_value=float(balance) if balance > 0 else 1.00,
+                value=st.session_state['bet_amount'],
+                step=0.50, 
+                format="%.2f",
+                key="bet_amount_input",
+                label_visibility="collapsed"
+            )
+            
+            # Atualiza o session_state
+            st.session_state['bet_amount'] = amount
+            
+            # Calcula e mostra ganho potencial em tempo real
+            if amount > 0:
+                potential_win = amount * intent['odds']
+                profit = potential_win - amount
                 
-                amount = st.number_input("Valor da Aposta (R$)", min_value=1.00, step=0.50, format="%.2f")
-                
-                submitted = st.form_submit_button("Confirmar Aposta")
-                
-                if submitted:
+                st.markdown(f"""
+                    <div class="potential-win-box">
+                        <div class="potential-row">
+                            <span class="potential-label"> Retorno Potencial:</span>
+                            <span class="potential-value win">R$ {potential_win:.2f}</span>
+                        </div>
+                        <div class="potential-row">
+                            <span class="potential-label"> Lucro Líquido:</span>
+                            <span class="potential-value profit">R$ {profit:.2f}</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Botões de ação
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                if st.button(" Cancelar", use_container_width=True, key="cancel_bet"):
+                    st.session_state['bet_intent'] = None
+                    st.session_state['bet_amount'] = 1.0
+                    st.rerun()
+            
+            with col2:
+                if st.button(" Confirmar Aposta", type="primary", use_container_width=True, key="confirm_bet"):
                     if amount > balance:
-                        st.error("Saldo insuficiente para esta aposta.")
+                        st.error(" Saldo insuficiente para esta aposta.")
+                    elif amount <= 0:
+                        st.error(" O valor deve ser maior que zero.")
                     else:
-                        # Chama a função do backend
                         success = bet_service.create_bet(
                             user_id=user_id,
                             match_id=intent['match_id'],
                             amount=amount,
                             prediction=intent['prediction']
                         )
-                        if success:
-                            st.success("Aposta realizada com sucesso!")
-                        else:
-                            st.error("Houve um erro ao registrar sua aposta.")
                         
-                        st.session_state['bet_intent'] = None # Limpa a intenção
-                        st.rerun() # Recarrega a página
-
-            if st.button("Cancelar Aposta"):
-                st.session_state['bet_intent'] = None
-                st.rerun()
+                        if success:
+                            st.success(" Aposta realizada com sucesso!")
+                            st.balloons()
+                            # Atualiza o saldo na sessão
+                            st.session_state.user_balance = user_service.get_user_balance(user_id)
+                        else:
+                            st.error(" Erro ao registrar aposta. Tente novamente.")
+                        
+                        st.session_state['bet_intent'] = None
+                        st.session_state['bet_amount'] = 1.0
+                        st.rerun()
