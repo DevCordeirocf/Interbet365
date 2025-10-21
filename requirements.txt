@@ -1,5 +1,6 @@
 streamlit
 streamlit-option-menu
+streamlit-autorefresh
 supabase
 psycopg2-binary
 mercadopago
