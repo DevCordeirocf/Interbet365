@@ -13,7 +13,7 @@ from views import apostar, carteira, minhasApostas, admin # Mantive seu nome 'mi
 # --- 1. Configuração da Página ---
 st.set_page_config(
     page_title="Wyden365",
-    page_icon="🏆",
+    page_icon="🐯",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -43,7 +43,7 @@ if not supabase:
 
 if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
     
-    st.title("Bem-vindo ao Wyden365 🏆")
+    st.title("Bem-vindo ao Wyden365 ")
     
     login_tab, register_tab = st.tabs(["Login", "Registrar-se"])
     
