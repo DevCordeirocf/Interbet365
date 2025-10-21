@@ -12,7 +12,7 @@ from core import user_service
 from views import apostar, carteira, minhasApostas, admin, login_page
 
 # Importa os estilos
-from styles import load_auth_styles, render_brand, render_footer
+from styles.betting import load_betting_styles
 
 # --- 1. Configuração da Página ---
 st.set_page_config(
@@ -52,6 +52,7 @@ if not is_logged_in and 'view' not in st.session_state:
 
 # --- ESTADO 1: USUÁRIO ESTÁ LOGADO ---
 if is_logged_in:
+    load_betting_styles()
     # Renderiza o header de usuário logado
     col1, col2 = st.columns([0.8, 0.2])
     with col1:

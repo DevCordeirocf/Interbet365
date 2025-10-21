@@ -1,14 +1,6 @@
-"""
-styles.py
-Módulo central de estilos CSS para o Wyden365
-"""
-
 import streamlit as st
+from .config import COLOR_PRIMARY, COLOR_SECONDARY
 
-# Cores do sistema
-COLOR_PRIMARY = "#FF462C"
-COLOR_SECONDARY = "#88005B"
-COLOR_BACKGROUND = "#fffff0"
 
 def load_auth_styles():
     """
@@ -328,28 +320,4 @@ def load_auth_styles():
         }}
     }}
     </style>
-    """, unsafe_allow_html=True)
-
-
-def render_brand(subtitle=None):
-    """
-    Renderiza o título da marca com gradiente
-    
-    Args:
-        subtitle: Texto opcional para subtítulo
-    """
-    subtitle_html = f"<p class='brand-subtitle'>{subtitle}</p>" if subtitle else ""
-    
-    st.markdown(f"""
-        <div style="margin: 2rem 0;">
-            <h1 class='brand-title'>Wyden365</h1>
-            {subtitle_html}
-        </div>
-    """, unsafe_allow_html=True)
-
-
-def render_footer():
-    """Renderiza o rodapé"""
-    st.markdown("""
-        <p class='footer'>© 2025 Wyden365. Jogue com responsabilidade. +18</p>
     """, unsafe_allow_html=True)
