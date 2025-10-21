@@ -3,8 +3,6 @@
 import streamlit as st
 from core.db import init_supabase_client
 from core import user_service
-
-# Importa seus estilos (se estiverem em um local acessível)
 from styles import load_auth_styles, render_brand, render_footer
 
 # Inicializa o cliente Supabase para ser usado nesta view
