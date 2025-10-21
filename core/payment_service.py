@@ -49,7 +49,7 @@ def create_payment_preference(username: str, user_id: int, amount: float) -> dic
     # ==============================================================================
     # 1. NGROK URL: A URL base gerada pelo NGROK.
     #    Ela será usada tanto para o webhook quanto para o redirecionamento.
-    ngrok_base_url = "https://27c33be09c45.ngrok-free.app" # SEM a barra no final
+    ngrok_base_url = "https://5b82d502625f.ngrok-free.app" # SEM a barra no final
 
     # 2. Monta as URLs completas
     webhook_url = f"{ngrok_base_url}/webhook/mercado-pago"
