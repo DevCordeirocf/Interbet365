@@ -7,8 +7,12 @@ from streamlit_option_menu import option_menu
 # Importa o CONECTOR REAL do banco de dados e os SERVIÇOS
 from core.db import init_supabase_client
 from core import user_service 
+
 # Importa as 'views' (páginas) da nossa aplicação
-from views import apostar, carteira, minhasApostas, admin # Mantive seu nome 'minhasApostas'
+from views import apostar, carteira, minhasApostas, admin
+
+# Importa os estilos
+from styles import load_auth_styles, render_brand, render_footer
 
 # --- 1. Configuração da Página ---
 st.set_page_config(
@@ -43,65 +47,66 @@ if not supabase:
 
 if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
     
-    st.title("Bem-vindo ao Wyden365 ")
+    # Carrega os estilos de autenticação
+    load_auth_styles()
     
-    login_tab, register_tab = st.tabs(["Login", "Registrar-se"])
+    # Renderiza a marca
+    render_brand(subtitle="Apostas Universitárias")
     
-    # --- Aba de Login ---
-    with login_tab:
-        with st.form("login_form"):
-            email = st.text_input("Email")
-            password = st.text_input("Senha", type="password")
-            login_button = st.form_submit_button("Entrar")
+    # Centraliza o conteúdo
+    col1, col2, col3 = st.columns([1, 1, 1])
+    
+    with col2:
+        
+        login_tab, register_tab = st.tabs(["Login", "Registrar-se"])
+        
+        # --- Aba de Login ---
+        with login_tab:
             
-            if login_button:
+            with st.form("login_form"):
+                email = st.text_input("Email", placeholder="seu@email.com")
+                password = st.text_input("Senha", type="password", placeholder="••••••••")
+                login_button = st.form_submit_button("Entrar")
                 
-                try:
-                    session = supabase.auth.sign_in_with_password({
-                        "email": email,
-                        "password": password
-                    })
+                if login_button:
+                    
+                    try:
+                        session = supabase.auth.sign_in_with_password({
+                            "email": email,
+                            "password": password
+                        })
 
-                    user = session.user
-                    
-                    # =========================================================
-                    # MUDANÇA AQUI: Trocado 'database' por 'user_service'
-                    # =========================================================
-                    profile = user_service.get_profile(user.id)
-                    
-                    if profile:
-                        st.session_state['authenticated'] = True
-                        st.session_state['user_id'] = user.id
-                        st.session_state['email'] = user.email
-                        st.session_state['username'] = profile['username']
-                        st.session_state['role'] = profile['role']
-                        st.success("Login bem-sucedido!")
-                        st.rerun()
-                    else:
-                        st.error("Login bem-sucedido, mas não foi possível encontrar seu perfil.")
+                        user = session.user
                         
-                except Exception as e:
-                    st.error(f"Erro no login: Usuário ou senha inválidos.")
+                        # Busca o perfil do usuário
+                        profile = user_service.get_profile(user.id)
+                        
+                        if profile:
+                            st.session_state['authenticated'] = True
+                            st.session_state['user_id'] = user.id
+                            st.session_state['email'] = user.email
+                            st.session_state['username'] = profile['username']
+                            st.session_state['role'] = profile['role']
+                            st.success("Login bem-sucedido!")
+                            st.rerun()
+                        else:
+                            st.error("Login bem-sucedido, mas não foi possível encontrar seu perfil.")
+                            
+                    except Exception as e:
+                        st.error(f"Erro no login: Usuário ou senha inválidos.")
 
-    # --- Aba de Registro ---
-    with register_tab:
-        with st.form("register_form"):
-            username = st.text_input("Nome de Usuário (único)")
-            email = st.text_input("Email de Registro")
-            password = st.text_input("Senha de Registro", type="password")
-            register_button = st.form_submit_button("Criar Conta")
+        # --- Aba de Registro ---
+        with register_tab:
             
-            if register_button:
-                if not username:
-                    st.warning("Nome de usuário é obrigatório.")
-                else:
-                    # =========================================================
-                    # MUDANÇA AQUI: Lógica de negócio movida para o 'user_service'
-                    # =========================================================
-                    username_exists = user_service.does_username_exist(username)
-
-                    if username_exists:
-                        st.error("Este nome de usuário já está em uso. Escolha outro.")
+            with st.form("register_form"):
+                username = st.text_input("Nome de Usuário", placeholder="Escolha um nome único")
+                email = st.text_input("Email", placeholder="seu@email.com")
+                password = st.text_input("Senha", type="password", placeholder="Mínimo 6 caracteres")
+                register_button = st.form_submit_button("Criar conta")
+                
+                if register_button:
+                    if not username:
+                        st.warning("Nome de usuário é obrigatório.")
                     else:
                         try:
                             session = supabase.auth.sign_up({
@@ -114,6 +119,11 @@ if 'authenticated' not in st.session_state or not st.session_state['authenticate
                             st.success("Registro realizado com sucesso! Verifique seu e-mail para confirmar a conta.")
                         except Exception as e:
                             st.error(f"Erro no registro: {e}")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Renderiza o rodapé
+        render_footer()
 
 else:
     # --- SE ESTIVER LOGADO: Mostrar o Header de Navegação e as Páginas ---
@@ -143,7 +153,7 @@ else:
         apostar.render()
         
     elif selected_page == "Minhas Apostas":
-        minhasApostas.render() # <-- Mantendo sua nomenclatura
+        minhasApostas.render()
         
     elif selected_page == "Carteira":
         carteira.render()
