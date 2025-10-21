@@ -43,7 +43,7 @@ def update_database_on_payment(supabase: Client, external_reference: str, amount
         user_id = parts[1]
 
         # 1. Pega o saldo atual do usuário
-        profile_res = supabase.table('Profiles').select('balance').eq('id', user_id).single().execute()
+        profile_res = supabase.table('profiles').select('balance').eq('id', user_id).single().execute()
         
         if not profile_res.data:
             print(f"ERRO DO WEBHOOK: Perfil para o usuário {user_id} não foi encontrado.")
@@ -53,8 +53,8 @@ def update_database_on_payment(supabase: Client, external_reference: str, amount
         current_balance = profile_res.data['balance']
         new_balance = float(current_balance) + float(amount)
 
-        # 3. Atualiza o saldo na tabela Profiles
-        update_res = supabase.table('Profiles').update({'balance': new_balance}).eq('id', user_id).execute()
+        # 3. Atualiza o saldo na tabela profiles
+        update_res = supabase.table('profiles').update({'balance': new_balance}).eq('id', user_id).execute()
 
         # Opcional: Registra a transação como 'Concluída'
         # supabase.table('Transactions').update({'status': 'Concluído'}).eq('external_id', payment_id).execute()

@@ -1,3 +1,5 @@
 /venv
 /.streamlit
 /webhook_server/.env
+__pycache__/
+

@@ -4,14 +4,13 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-# Importa o CONECTOR REAL do banco de dados
-from core import database
-
+# Importa o CONECTOR REAL do banco de dados e os SERVIÇOS
+from core.db import init_supabase_client
+from core import user_service 
 # Importa as 'views' (páginas) da nossa aplicação
-from views import apostar, carteira, minhasApostas, admin
+from views import apostar, carteira, minhasApostas, admin # Mantive seu nome 'minhasApostas'
 
 # --- 1. Configuração da Página ---
-# Configura o layout da página para ser 'wide' (largo) e o menu lateral recolhido
 st.set_page_config(
     page_title="Wyden365",
     page_icon="🏆",
@@ -20,7 +19,6 @@ st.set_page_config(
 )
 
 # --- 2. CSS Customizado ---
-# Esconde o menu 'hambúrguer' padrão do Streamlit e o rodapé
 hide_streamlit_style = """
 <style>
 #MainMenu {visibility: hidden;}
@@ -31,10 +29,9 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 # --- 3. Inicialização do Cliente Supabase ---
-# Inicializa o cliente uma vez e o armazena no cache do Streamlit
 @st.cache_resource
 def get_supabase_client():
-    return database.init_supabase_client()
+    return init_supabase_client()
 
 supabase = get_supabase_client()
 if not supabase:
@@ -44,10 +41,8 @@ if not supabase:
 
 # --- 4. Lógica Principal: Autenticação vs. Navegação ---
 
-# Verifica se o usuário já está logado na sessão do Streamlit
 if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
     
-    # --- SE NÃO ESTIVER LOGADO: Mostrar telas de Login / Registro ---
     st.title("Bem-vindo ao Wyden365 🏆")
     
     login_tab, register_tab = st.tabs(["Login", "Registrar-se"])
@@ -60,26 +55,28 @@ if 'authenticated' not in st.session_state or not st.session_state['authenticate
             login_button = st.form_submit_button("Entrar")
             
             if login_button:
+                
                 try:
-                    # Tenta fazer o login com o Supabase
                     session = supabase.auth.sign_in_with_password({
                         "email": email,
                         "password": password
                     })
+
                     user = session.user
                     
-                    # Se o login deu certo, busca o perfil (saldo, role)
-                    profile = database.get_profile(user.id)
+                    # =========================================================
+                    # MUDANÇA AQUI: Trocado 'database' por 'user_service'
+                    # =========================================================
+                    profile = user_service.get_profile(user.id)
                     
                     if profile:
-                        # Salva tudo na sessão do Streamlit
                         st.session_state['authenticated'] = True
                         st.session_state['user_id'] = user.id
                         st.session_state['email'] = user.email
                         st.session_state['username'] = profile['username']
                         st.session_state['role'] = profile['role']
                         st.success("Login bem-sucedido!")
-                        st.rerun() # Recarrega a página para o estado "logado"
+                        st.rerun()
                     else:
                         st.error("Login bem-sucedido, mas não foi possível encontrar seu perfil.")
                         
@@ -98,20 +95,25 @@ if 'authenticated' not in st.session_state or not st.session_state['authenticate
                 if not username:
                     st.warning("Nome de usuário é obrigatório.")
                 else:
-                    try:
-                        # Tenta criar o usuário no Supabase
-                        # (O Trigger no BD vai criar o Perfil automaticamente)
-                        session = supabase.auth.sign_up({
-                            "email": email,
-                            "password": password,
-                            "options": {
-                                # Passa o username para o Trigger que criamos
-                                "data": {"username": username} 
-                            }
-                        })
-                        st.success("Registro realizado com sucesso! Verifique seu e-mail para confirmar a conta.")
-                    except Exception as e:
-                        st.error(f"Erro no registro: {e}")
+                    # =========================================================
+                    # MUDANÇA AQUI: Lógica de negócio movida para o 'user_service'
+                    # =========================================================
+                    username_exists = user_service.does_username_exist(username)
+
+                    if username_exists:
+                        st.error("Este nome de usuário já está em uso. Escolha outro.")
+                    else:
+                        try:
+                            session = supabase.auth.sign_up({
+                                "email": email,
+                                "password": password,
+                                "options": {
+                                    "data": {"username": username} 
+                                }
+                            })
+                            st.success("Registro realizado com sucesso! Verifique seu e-mail para confirmar a conta.")
+                        except Exception as e:
+                            st.error(f"Erro no registro: {e}")
 
 else:
     # --- SE ESTIVER LOGADO: Mostrar o Header de Navegação e as Páginas ---
@@ -120,7 +122,6 @@ else:
     col1, col2 = st.columns([0.8, 0.2])
 
     with col1:
-        # O menu principal
         selected_page = option_menu(
             menu_title=None,
             options=["Apostar", "Minhas Apostas", "Carteira", "Admin"],
@@ -129,29 +130,25 @@ else:
         )
     
     with col2:
-        # Mostra o nome do usuário e o botão de Sair
         st.write(f"Olá, **{st.session_state['username']}**!")
         if st.button("Sair"):
-            # Limpa a sessão do Streamlit
             for key in st.session_state.keys():
                 del st.session_state[key]
-            supabase.auth.sign_out() # Desloga do Supabase
-            st.rerun() # Recarrega para a tela de login
+            supabase.auth.sign_out()
+            st.rerun()
 
     # --- 6. Roteador de Páginas ---
-    # Renderiza a view selecionada
     
     if selected_page == "Apostar":
         apostar.render()
         
     elif selected_page == "Minhas Apostas":
-        minhasApostas.render()
+        minhasApostas.render() # <-- Mantendo sua nomenclatura
         
     elif selected_page == "Carteira":
         carteira.render()
         
     elif selected_page == "Admin":
-        # Proteção extra: só renderiza a página Admin se o 'role' for 'admin'
         if st.session_state['role'] == 'admin':
             admin.render()
         else:
