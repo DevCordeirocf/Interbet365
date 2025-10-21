@@ -4,12 +4,12 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-# Importa o CONECTOR REAL do banco de dados e os SERVIÇOS
+# Importa o CONECTOR REAL e os SERVIÇOS
 from core.db import init_supabase_client
 from core import user_service 
 
-# Importa as 'views' (páginas) da nossa aplicação
-from views import apostar, carteira, minhasApostas, admin
+# Importa as 'views' (páginas)
+from views import apostar, carteira, minhasApostas, admin, login_page
 
 # Importa os estilos
 from styles import load_auth_styles, render_brand, render_footer
@@ -17,7 +17,7 @@ from styles import load_auth_styles, render_brand, render_footer
 # --- 1. Configuração da Página ---
 st.set_page_config(
     page_title="Wyden365",
-    page_icon="🐯",
+    page_icon="🏆", # Ícone original
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -35,100 +35,88 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 @st.cache_resource
 def get_supabase_client():
     return init_supabase_client()
-
 supabase = get_supabase_client()
 if not supabase:
-    st.error("Falha fatal ao conectar com o banco de dados.")
-    st.stop()
+    st.error("Falha fatal ao conectar com o banco de dados."); st.stop()
 
-# --- 4. Lógica Principal: Navegação ---
 
-# Renderiza a marca
-render_brand(subtitle="Apostas Universitárias")
+# --- 4. Gerenciamento de Estado da View ---
+is_logged_in = 'authenticated' in st.session_state and st.session_state['authenticated']
 
-# Menu de navegação principal
-selected = option_menu(
-    menu_title=None,
-    options=["Apostar", "Carteira", "Minhas Apostas", "Login"],
-    icons=["currency-exchange", "wallet", "list-check", "person"],
-    orientation="horizontal",
-    default_index=0
-)
+# Define o estado de view padrão para convidados
+if not is_logged_in and 'view' not in st.session_state:
+    st.session_state['view'] = 'browse' # 'browse' ou 'login'
 
-# Roteamento das páginas
-if selected == "Apostar":
-    apostar.render()
-elif selected == "Carteira":
-    if 'authenticated' in st.session_state and st.session_state['authenticated']:
-        carteira.render()
-    else:
-        st.warning("🔒 Você precisa fazer login para acessar sua carteira.")
-elif selected == "Minhas Apostas":
-    if 'authenticated' in st.session_state and st.session_state['authenticated']:
-        minhasApostas.render()
-    else:
-        st.warning("🔒 Você precisa fazer login para ver suas apostas.")
-elif selected == "Login":
-    if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
-        # Carrega os estilos de autenticação
-        load_auth_styles()
-        
-        # Centraliza o conteúdo
-        col1, col2, col3 = st.columns([1, 1, 1])
-        
-        with col2:
-            login_tab, register_tab = st.tabs(["Login", "Registrar-se"])
-            
-            # --- Aba de Login ---
-            with login_tab:
-                with st.form("login_form"):
-                    email = st.text_input("Email", placeholder="seu@email.com")
-                    password = st.text_input("Senha", type="password", placeholder="••••••••")
-                    login_button = st.form_submit_button("Entrar")
-                    
-                    if login_button:
-                        if email and password:
-                            # Tenta fazer login
-                            success, user = user_service.login_user(supabase, email, password)
-                            
-                            if success:
-                                st.success("✅ Login realizado com sucesso!")
-                                st.rerun()
-                            else:
-                                st.error("❌ Email ou senha inválidos.")
-                        else:
-                            st.error("Por favor, preencha todos os campos.")
-            
-            # --- Aba de Registro ---
-            with register_tab:
-                with st.form("register_form"):
-                    new_username = st.text_input("Nome de Usuário")
-                    new_email = st.text_input("Email", placeholder="seu@email.com")
-                    new_password = st.text_input("Senha", type="password", placeholder="••••••••")
-                    confirm_password = st.text_input("Confirme a Senha", type="password", placeholder="••••••••")
-                    register_button = st.form_submit_button("Registrar")
-                    
-                    if register_button:
-                        if new_username and new_email and new_password and confirm_password:
-                            if new_password == confirm_password:
-                                # Tenta registrar o usuário
-                                success = user_service.register_user(supabase, new_email, new_password, new_username)
-                                
-                                if success:
-                                    st.success("✅ Conta criada com sucesso! Faça login para continuar.")
-                                else:
-                                    st.error("❌ Erro ao criar conta. Este email já está em uso.")
-                            else:
-                                st.error("As senhas não coincidem.")
-                        else:
-                            st.error("Por favor, preencha todos os campos.")
-    else:
-        # Se já estiver logado, mostrar informações do usuário e botão de logout
+
+# --- 5. Roteamento de Layout Principal ---
+
+# --- ESTADO 1: USUÁRIO ESTÁ LOGADO ---
+if is_logged_in:
+    # Renderiza o header de usuário logado
+    col1, col2 = st.columns([0.8, 0.2])
+    with col1:
+        options = ["Apostar", "Minhas Apostas", "Carteira"]
+        icons = ["🏆", "🎟️", "💵"]
+        if st.session_state.get('role') == 'admin':
+            options.append("Admin")
+            icons.append("⚙️")
+
+        selected_page = option_menu(
+            menu_title=None,
+            options=options,
+            icons=icons,
+            orientation="horizontal",
+        )
+    with col2:
         st.write(f"Olá, **{st.session_state['username']}**!")
         if st.button("Sair"):
             for key in st.session_state.keys():
                 del st.session_state[key]
             supabase.auth.sign_out()
+            st.session_state['view'] = 'browse' # Define a view padrão para convidados
             st.rerun()
 
-render_footer()
+    # Roteador de Páginas (Logado)
+    if selected_page == "Apostar":
+        apostar.render()
+    elif selected_page == "Minhas Apostas":
+        minhasApostas.render()
+    elif selected_page == "Carteira":
+        carteira.render()
+    elif selected_page == "Admin":
+        admin.render()
+
+# --- ESTADO 2: CONVIDADO QUER FAZER LOGIN ---
+elif st.session_state.get('view') == 'login':
+    # Renderiza a página de login em tela cheia
+    login_page.render()
+
+# --- ESTADO 3: CONVIDADO ESTÁ NAVEGANDO (DEFAULT) ---
+else: # (not is_logged_in and st.session_state.get('view') == 'browse')
+    # Renderiza o header de convidado
+    col1, col2 = st.columns([0.8, 0.2])
+    with col1:
+        selected_page = option_menu(
+            menu_title=None,
+            options=["Apostar", "Minhas Apostas", "Carteira"],
+            icons=["🏆", "🎟️", "💵"],
+            orientation="horizontal",
+        )
+    with col2:
+        col_login, col_reg = st.columns(2)
+        with col_login:
+            if st.button("Login", use_container_width=True):
+                st.session_state['view'] = 'login' # Muda o estado para o layout de login
+                st.rerun()
+        with col_reg:
+            if st.button("Registrar-se", use_container_width=True):
+                st.session_state['view'] = 'login' # Muda o estado para o layout de login
+                st.rerun()
+
+    # Roteador de Páginas (Convidado)
+    if selected_page == "Apostar":
+        apostar.render()
+    elif selected_page == "Minhas Apostas" or selected_page == "Carteira":
+        # Se clicar em uma página protegida, muda o estado para login
+        st.session_state['view'] = 'login'
+        st.rerun()
