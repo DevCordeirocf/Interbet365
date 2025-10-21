@@ -3,12 +3,9 @@ venv/
 .env/
 .venv/
 
-# Cache do Python
 __pycache__/
 *.py[cod]
 
-# Configs do Streamlit
 .streamlit/
 
-# Arquivo .env (qualquer pasta)
 *.env

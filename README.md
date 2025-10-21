@@ -1,4 +1,4 @@
-# Wyden365 🏆
+# Wyden365 
 
 ## Visão Geral do Projeto
 
