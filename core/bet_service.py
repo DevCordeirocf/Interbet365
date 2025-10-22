@@ -42,8 +42,9 @@ def get_bets_by_user(user_id: str):
     
     try:
         # Busca as apostas e faz JOIN para pegar o nome dos times
+        # Inclui as odds da partida no JOIN (odds_a, odds_b, odds_draw)
         response = supabase.table('bets').select(
-            '*, match:matches(team_a:team_a_id(name), team_b:team_b_id(name), match_datetime)'
+            '*, match:matches(id, match_datetime, odds_a, odds_b, odds_draw, team_a:team_a_id(name), team_b:team_b_id(name))'
         ).eq('user_id', user_id).order('created_at', desc=True).execute()
         return response.data
     except Exception as e:

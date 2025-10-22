@@ -55,6 +55,10 @@ def render():
     
     # Header com ícone
     st.markdown("""
+    """, unsafe_allow_html=True)
+    
+    st.title(" Minhas Apostas")
+    
         <div class="icon-header">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="hsl(11, 100%, 60%)" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -98,6 +102,35 @@ def render():
             
             for bet in pending_bets:
                 # Pega os nomes dos times (o JOIN já foi feito no bet_service)
+                match_info = bet.get('match', {}) or {}
+                team_a = match_info.get('team_a', {}).get('name', 'Time A')
+                team_b = match_info.get('team_b', {}).get('name', 'Time B')
+
+                # Extrai valores com formatação correta
+                amount = float(bet.get('bet_amount', 0))
+
+                # Determina a odd correta a partir dos dados da partida
+                odds_a = None
+                odds_b = None
+                odds_draw = None
+                try:
+                    odds_a = float(match_info.get('odds_a')) if match_info.get('odds_a') is not None else None
+                    odds_b = float(match_info.get('odds_b')) if match_info.get('odds_b') is not None else None
+                    odds_draw = float(match_info.get('odds_draw')) if match_info.get('odds_draw') is not None else None
+                except Exception:
+                    pass
+
+                prediction = bet.get('prediction')
+                if prediction == 'A':
+                    odd = odds_a if odds_a is not None else extract_odd(bet)
+                elif prediction == 'B':
+                    odd = odds_b if odds_b is not None else extract_odd(bet)
+                elif prediction == 'Empate' or prediction == 'Draw':
+                    odd = odds_draw if odds_draw is not None else extract_odd(bet)
+                else:
+                    odd = extract_odd(bet)
+
+                potential = amount * (float(odd) if odd is not None else 1.0)
                 match_info = bet.get('match', {})
                 team_a = match_info.get('team_a', {}).get('name', 'Time A')
                 team_b = match_info.get('team_b', {}).get('name', 'Time B')
@@ -111,6 +144,12 @@ def render():
                 header = f"Aposta de {format_brl(amount)} • {team_a} vs {team_b}"
                 
                 with st.expander(header):
+                        st.markdown(f"**Partida:** {team_a} vs {team_b}")
+                        st.markdown(f"**Sua Previsão:** {prediction or bet.get('prediction', '-')}")
+                        st.markdown(f"**Valor Apostado:** {format_brl(amount)}")
+                        st.markdown(f"**Odd:** {format_odd(odd)}")
+                        st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
+                        st.markdown(f"**Status:** {bet.get('status', '-')}")
                     st.markdown(f"**Partida:** {team_a} vs {team_b}")
                     st.markdown(f"**Sua Previsão:** {bet.get('prediction', '-')}")
                     st.markdown(f"**Valor Apostado:** {format_brl(amount)}")
@@ -135,11 +174,35 @@ def render():
             
             # Exibe as apostas finalizadas como cards customizados
             for bet in finished_bets:
+                match_info = bet.get('match', {}) or {}
                 match_info = bet.get('match', {})
                 team_a = match_info.get('team_a', {}).get('name', 'Time A')
                 team_b = match_info.get('team_b', {}).get('name', 'Time B')
 
                 amount = float(bet.get('bet_amount', 0))
+
+                # extrai odds da partida quando disponível
+                odds_a = None
+                odds_b = None
+                odds_draw = None
+                try:
+                    odds_a = float(match_info.get('odds_a')) if match_info.get('odds_a') is not None else None
+                    odds_b = float(match_info.get('odds_b')) if match_info.get('odds_b') is not None else None
+                    odds_draw = float(match_info.get('odds_draw')) if match_info.get('odds_draw') is not None else None
+                except Exception:
+                    pass
+
+                prediction = bet.get('prediction')
+                if prediction == 'A':
+                    odd = odds_a if odds_a is not None else extract_odd(bet)
+                elif prediction == 'B':
+                    odd = odds_b if odds_b is not None else extract_odd(bet)
+                elif prediction == 'Empate' or prediction == 'Draw':
+                    odd = odds_draw if odds_draw is not None else extract_odd(bet)
+                else:
+                    odd = extract_odd(bet)
+
+                potential = amount * (float(odd) if odd is not None else 1.0)
                 odd = extract_odd(bet)
                 potential = amount * odd
                 status = bet.get('status', '-')

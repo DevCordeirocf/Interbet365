@@ -15,6 +15,36 @@ def load_betting_styles():
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    
+    /* Estilos dos ícones */
+    .feature-icon {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+    }}
+    
+    .feature-icon svg {{
+        width: 24px;
+        height: 24px;
+        stroke: {COLOR_PRIMARY};
+        transition: transform 0.2s ease;
+    }}
+
+    .bet-button-container {{
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }}
+
+    .bet-button-container:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }}
+
+    .bet-button-container:hover .feature-icon svg {{
+        transform: scale(1.1);
+    }}
 
     /* ==============================
        VARIÁVEIS DO TEMA ESCURO
