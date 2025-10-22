@@ -8,7 +8,7 @@ from .config import COLOR_PRIMARY, COLOR_SECONDARY
 
 def render_brand(subtitle=None):
 
-    subtitle_html = f"<p class='brand-subtitle'>Aposte com inteligência</p>" if subtitle else ""
+    subtitle_html = f"<p class='brand-subtitle'>Aposte com inteligência, aposte em sua atlética favorita!</p>" if subtitle else ""
     
     st.markdown(f"""
         <div style="margin: 1rem 0;">
