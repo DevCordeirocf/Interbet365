@@ -4,6 +4,7 @@ from .config import COLOR_PRIMARY, COLOR_SECONDARY
 def load_auth_styles():
     """
     Carrega os estilos CSS para as páginas de autenticação (Login/Registro)
+    mantendo a proporção do estilo anterior com espaço para background
     """
     st.markdown(f"""
     <style>
@@ -20,6 +21,7 @@ def load_auth_styles():
     .stApp {{
         background: 
             linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7)),
+            /* INSIRA SUA IMAGEM DO UNSPLASH AQUI */
             url('https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=2070');
         background-size: cover;
         background-position: center;
@@ -121,7 +123,7 @@ def load_auth_styles():
     }}
 
     .stTabs [aria-selected="true"] {{
-        background-color: {COLOR_PRIMARY} !important;
+        background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_SECONDARY}) !important;
         color: white !important;
         border-color: {COLOR_PRIMARY} !important;
         box-shadow: 0 4px 15px rgba(255, 70, 44, 0.3);
@@ -148,13 +150,10 @@ def load_auth_styles():
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {{
         height: 3rem !important;
-        border: 2px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 10px !important;
         padding: 0 1rem !important;
         font-size: 0.95rem !important;
-        background: rgba(255, 255, 255, 0.95) !important;
         transition: all 0.3s ease !important;
-        color: #1f2937 !important;
         backdrop-filter: blur(10px);
     }}
 
@@ -162,7 +161,6 @@ def load_auth_styles():
     .stTextArea > div > div > textarea:focus {{
         border-color: {COLOR_PRIMARY} !important;
         outline: none !important;
-        background: white !important;
     }}
 
     .stTextInput > div > div > input::placeholder,
@@ -180,7 +178,7 @@ def load_auth_styles():
         font-weight: 600 !important;
         font-size: 1rem !important;
         border: 2px solid {COLOR_PRIMARY} !important;
-        background-color: {COLOR_PRIMARY} !important;
+        background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_SECONDARY}) !important;
         color: white !important;
         transition: all 0.3s ease !important;
         cursor: pointer !important;
@@ -190,36 +188,82 @@ def load_auth_styles():
     }}
 
     .stButton > button:hover {{
-        background-color: {COLOR_SECONDARY} !important;
+        background: linear-gradient(135deg, {COLOR_SECONDARY}, {COLOR_PRIMARY}) !important;
         border-color: {COLOR_SECONDARY} !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 25px rgba(255, 70, 44, 0.4) !important;
+    }}
+
+    /* Botões dentro do card de autenticação */
+    .auth-card .stButton > button,
+    .auth-card .stForm button[kind="primaryFormSubmit"] {{
+        background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_SECONDARY}) !important;
+        border-color: {COLOR_PRIMARY} !important;
+        color: white !important;
+        box-shadow: 0 6px 20px rgba(255, 70, 44, 0.35) !important;
+    }}
+
+    .auth-card .stButton > button:hover,
+    .auth-card .stForm button[kind="primaryFormSubmit"]:hover {{
+        background: linear-gradient(135deg, {COLOR_SECONDARY}, {COLOR_PRIMARY}) !important;
+        border-color: {COLOR_SECONDARY} !important;
+        transform: translateY(-2px) !important;
     }}
 
     .stButton > button:active {{
         transform: translateY(0) !important;
     }}
 
-    /* Botão de Submit do Form */
-    .stForm button[kind="primaryFormSubmit"] {{
+   /* ==============================
+       BOTÕES
+    ============================== */
+    
+    /* Botões normais do Streamlit */
+    .stButton > button {{
         height: 3rem !important;
         border-radius: 10px !important;
         font-weight: 600 !important;
         font-size: 1rem !important;
-        background-color: {COLOR_PRIMARY} !important;
-        border: 2px solid {COLOR_PRIMARY} !important;
+        border: 2px solid #FF462C !important;
+        background: linear-gradient(135deg, #FF462C, #A0153E) !important;
         color: white !important;
-        width: 100% !important;
         transition: all 0.3s ease !important;
         margin-top: 1rem !important;
+        width: 100%;
         box-shadow: 0 4px 15px rgba(255, 70, 44, 0.3);
     }}
 
-    .stForm button[kind="primaryFormSubmit"]:hover {{
-        background-color: {COLOR_SECONDARY} !important;
-        border-color: {COLOR_SECONDARY} !important;
+    .stButton > button:hover {{
+        background: linear-gradient(135deg, #A0153E, #FF462C) !important;
+        border-color: #A0153E !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 25px rgba(255, 70, 44, 0.4) !important;
+    }}
+
+    /* BOTÕES DE FORM (ENTRAR / CRIAR CONTA) - ESTILO DIRETO */
+    button[data-testid="baseButton-secondaryFormSubmit"] {{
+        height: 3rem !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        border: 2px solid #FF462C !important;
+        background: linear-gradient(135deg, #FF462C, #A0153E) !important;
+        color: white !important;
+        transition: all 0.3s ease !important;
+        margin-top: 1rem !important;
+        box-shadow: 0 4px 15px rgba(255, 70, 44, 0.3) !important;
+        width: 100% !important;
+    }}
+
+    button[data-testid="baseButton-secondaryFormSubmit"]:hover {{
+        background: linear-gradient(135deg, #A0153E, #FF462C) !important;
+        border-color: #A0153E !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(255, 70, 44, 0.4) !important;
+    }}
+
+    button[data-testid="baseButton-secondaryFormSubmit"]:active {{
+        transform: translateY(0) !important;
     }}
 
     /* ==============================
@@ -290,6 +334,28 @@ def load_auth_styles():
     }}
 
     /* ==============================
+       SCROLLBAR CUSTOMIZADA
+    ============================== */
+    ::-webkit-scrollbar {{
+        width: 8px;
+        height: 8px;
+    }}
+
+    ::-webkit-scrollbar-track {{
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }}
+
+    ::-webkit-scrollbar-thumb {{
+        background: rgba(255, 70, 44, 0.5);
+        border-radius: 4px;
+    }}
+
+    ::-webkit-scrollbar-thumb:hover {{
+        background: rgba(255, 70, 44, 0.7);
+    }}
+
+    /* ==============================
        RESPONSIVO
     ============================== */
     @media (max-width: 768px) {{
@@ -317,6 +383,32 @@ def load_auth_styles():
         .auth-card {{
             padding: 1.5rem;
         }}
+
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 1rem;
+        }}
+
+        .stTabs [data-baseweb="tab"] {{
+            width: 8rem;
+            font-size: 0.9rem;
+        }}
     }}
     </style>
+    """, unsafe_allow_html=True)
+
+def render_brand(title="Wyden365", subtitle="Apostas Universitárias"):
+    """Renderiza a marca centralizada"""
+    st.markdown(f"""
+    <div style="text-align: center; margin-bottom: 3rem;">
+        <h1 class="brand-title">{title}</h1>
+        <div class="brand-subtitle">{subtitle}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_footer():
+    """Renderiza o rodapé"""
+    st.markdown("""
+    <div class="footer">
+        © 2024 Wyden365 - Plataforma de Apostas Universitárias
+    </div>
     """, unsafe_allow_html=True)
