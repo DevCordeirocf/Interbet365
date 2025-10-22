@@ -2,5 +2,21 @@
 # Torna a pasta 'styles' um pacote Python
 
 from .auth import load_auth_styles
-from .betting import load_betting_styles
+from .betting import (
+	load_betting_styles,
+	render_match_card,
+	render_confirmation_box,
+)
 from .common import render_footer, render_brand, load_common_styles
+from .admin import load_admin_styles
+
+__all__ = [
+	'load_auth_styles',
+	'load_betting_styles',
+	'render_match_card',
+	'render_confirmation_box',
+	'render_footer',
+	'render_brand',
+	'load_common_styles',
+	'load_admin_styles',
+]

@@ -1,7 +1,6 @@
 import streamlit as st
 from .config import COLOR_PRIMARY, COLOR_SECONDARY
 
-
 def load_auth_styles():
     """
     Carrega os estilos CSS para as páginas de autenticação (Login/Registro)
