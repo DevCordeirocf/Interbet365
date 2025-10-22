@@ -1,12 +1,18 @@
-# views/carteira.py
-
 import streamlit as st
 import locale
 from core import user_service, payment_service
 from styles.wallet import load_wallet_styles
 
 # Configura o locale para português do Brasil
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+try:
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+except locale.Error:
+    print("Locale pt_BR.UTF-8 não encontrado, usando locale padrão.")
+    try:
+        locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+    except:
+        print("Locale C.UTF-8 também não encontrado, formatação pode falhar.")
+
 
 def render_header():
     """Renderiza o header da página"""
@@ -21,7 +27,7 @@ def render_balance_card(balance):
     try:
         # Tenta formatar usando locale
         formatted_balance = locale.currency(balance, grouping=True, symbol='R$')
-    except:
+    except Exception:
         # Fallback: formatação manual
         formatted_balance = f"R$ {balance:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     
@@ -106,7 +112,6 @@ def render_feature_cards_withdraw():
 
 def render_deposit_tab(username, user_id):
     """Renderiza a aba de depósito com design moderno usando classes CSS"""    
-    # Header da seção com ícone
     st.markdown("""
         <div class="section-header">
             <div class="section-icon">
@@ -119,13 +124,10 @@ def render_deposit_tab(username, user_id):
         </div>
     """, unsafe_allow_html=True)
     
-    # Renderiza os feature cards
     render_feature_cards_deposit()
     
-    # Fecha o container
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Formulário de depósito (Streamlit nativo com estilos aplicados via CSS)
     with st.form("deposit_form", clear_on_submit=True):
         amount_to_deposit = st.number_input(
             "Valor do depósito (R$)", 
@@ -162,10 +164,8 @@ def render_deposit_tab(username, user_id):
 def render_withdraw_tab(user_id, balance):
     """Renderiza a aba de saque com design moderno usando classes CSS"""
     
-    # Abre container com classe form-card
     st.markdown('<div class="form-card">', unsafe_allow_html=True)
     
-    # Header da seção com ícone
     st.markdown("""
         <div class="section-header">
             <div class="section-icon">
@@ -178,13 +178,10 @@ def render_withdraw_tab(user_id, balance):
         </div>
     """, unsafe_allow_html=True)
     
-    # Renderiza os feature cards
     render_feature_cards_withdraw()
     
-    # Fecha o container
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Formulário de saque (Streamlit nativo com estilos aplicados via CSS)
     with st.form("withdraw_form"):
         amount_to_withdraw = st.number_input(
             "Valor do saque (R$)", 
@@ -194,31 +191,57 @@ def render_withdraw_tab(user_id, balance):
             help="Valor mínimo: R$ 10,00"
         )
         
+        # --- ATUALIZAÇÃO 1: SELETOR PARA O TIPO DE CHAVE ---
+        pix_key_type_display = st.selectbox(
+            "Tipo de Chave Pix",
+            options=["CPF", "E-mail", "Celular", "Chave Aleatória"],
+            index=0,
+            help="Selecione o tipo de chave PIX que você vai informar abaixo."
+        )
+        
         pix_key = st.text_input(
             "Sua chave Pix",
-            placeholder="Digite sua chave PIX (CPF, e-mail, telefone ou chave aleatória)",
-            help="Insira uma chave PIX válida para receber o saque"
+            placeholder="Digite sua chave PIX",
+            help="Insira a chave PIX correspondente ao tipo selecionado acima."
         )
         
         withdraw_submitted = st.form_submit_button(" Solicitar Saque", use_container_width=True)
 
         if withdraw_submitted:
+            
+            # --- ATUALIZAÇÃO 2: MAPEAR O TIPO DE CHAVE E CRIAR DESCRIÇÃO ---
+            # Mapeia o nome amigável para o valor da API do Mercado Pago
+            api_key_type_map = {
+                "CPF": "CPF",
+                "E-mail": "EMAIL",
+                "Celular": "PHONE",
+                "Chave Aleatória": "RANDOM_KEY"
+            }
+            api_pix_key_type = api_key_type_map[pix_key_type_display]
+            
+            # Cria uma descrição padrão para o saque
+            description_for_mp = f"Saque Wyden365 - Usuário {st.session_state['username']}"
+            
             # Validações
             if not pix_key:
                 st.warning("⚠ Por favor, insira sua chave Pix.")
             elif amount_to_withdraw > balance:
                 try:
                     formatted_balance = locale.currency(balance, grouping=True, symbol='R$')
-                except:
+                except Exception:
                     formatted_balance = f"R$ {balance:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 st.error(f"✕ Saldo insuficiente. Você tem {formatted_balance} disponível.")
             else:
                 # Processamento do saque
                 with st.spinner("Processando sua solicitação de saque..."):
+                    
+                    # --- ATUALIZAÇÃO 3: CHAMADA DE FUNÇÃO CORRETA ---
                     response = payment_service.process_withdrawal(
-                        st.session_state['username'], 
-                        amount_to_withdraw, 
-                        pix_key
+                        user_id=user_id, 
+                        amount=amount_to_withdraw, 
+                        pix_key=pix_key,
+                        pix_key_type=api_pix_key_type, # Novo argumento
+                        description=description_for_mp   # Novo argumento
                     )
                 
                 if response["success"]:
@@ -233,32 +256,25 @@ def render_withdraw_tab(user_id, balance):
 def render():
     """Função principal de renderização da página de carteira"""
     
-    # Carrega CSS customizado com todas as classes
     load_wallet_styles()
     
-    # Bloco de proteção
     if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
         st.error("✕ Acesso negado. Por favor, faça o login primeiro.")
         st.stop()
     
-    # Header principal com classe icon-header
     render_header()
     
-    # Obtém dados do usuário
     user_id = st.session_state['user_id']
     username = st.session_state['username']
     
-    # Exibição do Saldo com classe balance-card
     balance = user_service.get_user_balance(user_id)
     
     if balance is not None:
-        # Renderiza card de saldo destacado com classes CSS
         render_balance_card(balance)
     else:
         st.error("✕ Não foi possível carregar seu saldo.")
         balance = 0.0
     
-    # Tabs Principais (estilos aplicados automaticamente via CSS .stTabs)
     tab_deposit, tab_withdraw = st.tabs([" Depositar", " Sacar"])
 
     with tab_deposit:
