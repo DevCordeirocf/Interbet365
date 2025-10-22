@@ -59,6 +59,15 @@ def render():
     
     st.title(" Minhas Apostas")
     
+        <div class="icon-header">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="hsl(11, 100%, 60%)" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.title(" Minhas Apostas")
+    
     # Obtém dados do usuário
     user_id = st.session_state['user_id']
     all_bets = bet_service.get_bets_by_user(user_id)
@@ -122,6 +131,14 @@ def render():
                     odd = extract_odd(bet)
 
                 potential = amount * (float(odd) if odd is not None else 1.0)
+                match_info = bet.get('match', {})
+                team_a = match_info.get('team_a', {}).get('name', 'Time A')
+                team_b = match_info.get('team_b', {}).get('name', 'Time B')
+                
+                # Extrai valores com formatação correta
+                amount = float(bet.get('bet_amount', 0))
+                odd = extract_odd(bet)
+                potential = amount * odd
 
                 # Monta o header do expander
                 header = f"Aposta de {format_brl(amount)} • {team_a} vs {team_b}"
@@ -133,6 +150,12 @@ def render():
                         st.markdown(f"**Odd:** {format_odd(odd)}")
                         st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
                         st.markdown(f"**Status:** {bet.get('status', '-')}")
+                    st.markdown(f"**Partida:** {team_a} vs {team_b}")
+                    st.markdown(f"**Sua Previsão:** {bet.get('prediction', '-')}")
+                    st.markdown(f"**Valor Apostado:** {format_brl(amount)}")
+                    st.markdown(f"**Odd:** {format_odd(odd)}")
+                    st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
+                    st.markdown(f"**Status:** {bet.get('status', '-')}")
 
     with tab_finished:
         st.subheader("Histórico de Apostas")
@@ -152,6 +175,7 @@ def render():
             # Exibe as apostas finalizadas como cards customizados
             for bet in finished_bets:
                 match_info = bet.get('match', {}) or {}
+                match_info = bet.get('match', {})
                 team_a = match_info.get('team_a', {}).get('name', 'Time A')
                 team_b = match_info.get('team_b', {}).get('name', 'Time B')
 
@@ -179,6 +203,8 @@ def render():
                     odd = extract_odd(bet)
 
                 potential = amount * (float(odd) if odd is not None else 1.0)
+                odd = extract_odd(bet)
+                potential = amount * odd
                 status = bet.get('status', '-')
                 result = bet.get('result', '')
                 
