@@ -86,10 +86,17 @@ def simulate_baccarat_hand():
     }
 
 def calculate_baccarat_payout(bet_on: str, outcome: str, bet_amount: float) -> float:
+
     if bet_on == outcome:
-        if outcome == "Player": return bet_amount * 1
-        elif outcome == "Banker": return bet_amount * 0.95
-        elif outcome == "Tie": return bet_amount * 8
+        if outcome == "Player":
+            return bet_amount + (bet_amount * 1)
+        elif outcome == "Banker":
+            return bet_amount + (bet_amount * 0.95)
+        elif outcome == "Tie":
+            return bet_amount + (bet_amount * 8)
+
+    elif outcome == "Tie" and bet_on in ["Player", "Banker"]:
+        return bet_amount
     else:
         return 0.0
 
