@@ -7,9 +7,17 @@ from styles import load_admin_styles
 # FUNÇÕES AUXILIARES
 # ==============================
 def format_for_selectbox(items, key_col='id', value_col='name'):
-    options = {item[key_col]: item[value_col] for item in items}
-    formatted_options = [item[value_col] for item in items]
+    """Formata lista de dicts para uso em st.selectbox."""
+    if not isinstance(items, list):
+        items = []
+        
+    options = {item[key_col]: item[value_col] for item in items if key_col in item and value_col in item}
+    formatted_options = [item[value_col] for item in items if value_col in item]
     return options, formatted_options
+
+# ==============================
+# RENDERIZAÇÃO DAS TABS
+# ==============================
 
 def render_modalities_tab():
     st.subheader("Adicionar Nova Modalidade")
@@ -19,9 +27,11 @@ def render_modalities_tab():
         
         if st.form_submit_button("Criar Modalidade", use_container_width=True):
             if modality_name:
-                match_service.create_modality(modality_name)
-                st.success(f"Modalidade '{modality_name}' criada com sucesso!")
-                st.rerun()
+                result = match_service.create_modality(modality_name)
+                if result:
+                    st.success(f"Modalidade '{modality_name}' criada com sucesso!")
+                    st.rerun()
+                # Erro já é mostrado pelo service
             else:
                 st.warning("O nome da modalidade não pode ser vazio.")
     
@@ -30,7 +40,7 @@ def render_modalities_tab():
     modalities = match_service.get_all_modalities()
     
     if modalities:
-        st.dataframe(modalities, use_container_width=True)
+        st.dataframe(modalities, use_container_width=True, hide_index=True)
     else:
         st.info("Nenhuma modalidade cadastrada ainda.")
 
@@ -48,73 +58,93 @@ def render_teams_tab():
             selected_modality_name = st.selectbox("Modalidade do Time", modality_names)
             
             if st.form_submit_button("Criar Time", use_container_width=True):
-                if team_name:
-                    selected_modality_id = [k for k, v in modality_map.items() if v == selected_modality_name][0]
-                    match_service.create_team(team_name, selected_modality_id)
-                    st.success(f"Time '{team_name}' criado com sucesso!")
-                    st.rerun()
+                if team_name and selected_modality_name:
+                    selected_modality_id = next((k for k, v in modality_map.items() if v == selected_modality_name), None)
+                    if selected_modality_id:
+                        result = match_service.create_team(team_name, selected_modality_id)
+                        if result:
+                            st.success(f"Time '{team_name}' criado com sucesso!")
+                            st.rerun()
+                        # Erro já é mostrado pelo service
+                    else:
+                         st.error("Modalidade selecionada inválida.")
                 else:
-                    st.warning("O nome do time não pode ser vazio.")
+                    st.warning("O nome do time e a modalidade são obrigatórios.")
     
     st.divider()
     st.subheader("Times Existentes")
     teams = match_service.get_all_teams()
     
     if teams:
-        st.dataframe(teams, use_container_width=True)
+        display_teams = [{'ID': t.get('id'), 'Nome': t.get('name'), 'Modalidade': t.get('modality', {}).get('name', 'N/A')} for t in teams]
+        st.dataframe(display_teams, use_container_width=True, hide_index=True)
     else:
         st.info("Nenhum time cadastrado ainda.")
 
 def render_matches_tab():
     st.subheader("Criar Nova Partida")
     teams_data = match_service.get_all_teams()
+    modalities_data = match_service.get_all_modalities() 
     
     if not teams_data or len(teams_data) < 2:
         st.warning("Você precisa criar pelo menos dois Times antes de criar uma Partida.")
+    elif not modalities_data: 
+         st.warning("Você precisa criar pelo menos uma Modalidade antes de criar uma Partida.")
     else:
         with st.form("match_form", clear_on_submit=True):
             team_map, team_names = format_for_selectbox(teams_data, 'id', 'name')
+            modality_map, modality_names = format_for_selectbox(modalities_data, 'id', 'name') 
             
-            # Seleção dos times
+            selected_modality_name = st.selectbox("Modalidade da Partida", modality_names)
+            
             col1, col2 = st.columns(2)
             with col1:
                 selected_team_a_name = st.selectbox("Time A", team_names, index=0)
             with col2:
-                selected_team_b_name = st.selectbox("Time B", team_names, index=1 if len(team_names) > 1 else 0)
+                default_b_index = 1 if len(team_names) > 1 else 0
+                selected_team_b_name = st.selectbox("Time B", team_names, index=default_b_index)
             
-            # Data e hora da partida
             col_date, col_time = st.columns(2)
             with col_date:
-                match_date = st.date_input("Data da Partida", value=datetime.date.today())
+                match_date = st.date_input("Data da Partida", value=datetime.date.today() + datetime.timedelta(days=1)) 
             with col_time:
-                match_time = st.time_input("Hora da Partida", value=datetime.datetime.now().time())
+                match_time = st.time_input("Hora da Partida", value=datetime.time(19, 0)) 
             
-            # Odds
             st.markdown("**Odds da Partida**")
             col_odds_a, col_odds_d, col_odds_b = st.columns(3)
             with col_odds_a:
-                odds_a = st.number_input("Odds Time A", min_value=1.01, value=2.00, step=0.1)
+                odds_a = st.number_input("Odds Time A", min_value=1.01, value=2.10, step=0.05, format="%.2f")
             with col_odds_d:
-                odds_draw = st.number_input("Odds Empate", min_value=1.01, value=3.00, step=0.1)
+                odds_draw = st.number_input("Odds Empate", min_value=1.01, value=3.20, step=0.05, format="%.2f")
             with col_odds_b:
-                odds_b = st.number_input("Odds Time B", min_value=1.01, value=2.00, step=0.1)
+                odds_b = st.number_input("Odds Time B", min_value=1.01, value=2.90, step=0.05, format="%.2f")
             
             submitted = st.form_submit_button("Criar Partida", use_container_width=True)
             
             if submitted:
-                team_a_id = [k for k, v in team_map.items() if v == selected_team_a_name][0]
-                team_b_id = [k for k, v in team_map.items() if v == selected_team_b_name][0]
-                
-                if team_a_id == team_b_id:
+                team_a_id = next((k for k, v in team_map.items() if v == selected_team_a_name), None)
+                team_b_id = next((k for k, v in team_map.items() if v == selected_team_b_name), None)
+                modality_id = next((k for k, v in modality_map.items() if v == selected_modality_name), None) 
+
+                if not team_a_id or not team_b_id or not modality_id:
+                     st.error("Erro ao obter IDs dos times ou modalidade.")
+                elif team_a_id == team_b_id:
                     st.error("Um time não pode jogar contra ele mesmo.")
                 else:
-                    # Combina data e hora
                     full_match_datetime = datetime.datetime.combine(match_date, match_time)
-                    match_time_str = full_match_datetime.isoformat()
                     
-                    match_service.create_match(team_a_id, team_b_id, match_time_str, odds_a, odds_b, odds_draw)
-                    st.success("Partida criada com sucesso!")
-                    st.rerun()
+                    if full_match_datetime <= datetime.datetime.now():
+                        st.error("A data e hora da partida devem ser no futuro.")
+                    else:
+                        match_time_str = full_match_datetime.isoformat()
+                        
+                        result = match_service.create_match(
+                            team_a_id, team_b_id, match_time_str, odds_a, odds_b, odds_draw, modality_id
+                        )
+                        if result:
+                            st.success("Partida criada com sucesso!")
+                            st.rerun()
+                        # Erro já é mostrado pelo service
     
     st.divider()
     render_finalize_matches_section()
@@ -124,14 +154,30 @@ def render_matches_tab():
     matches = match_service.get_open_matches()
     
     if matches:
-        st.dataframe(matches, use_container_width=True)
+        display_matches = []
+        for m in matches:
+            # --- CORREÇÃO APLICADA AQUI TAMBÉM ---
+            modality_data = m.get('modality')
+            modality_name = modality_data.get('name', 'N/A') if modality_data else 'N/A'
+            # ------------------------------------
+            display_matches.append({
+                'ID': m.get('id'),
+                'Data/Hora': m.get('match_datetime'),
+                'Time A': m.get('team_a', {}).get('name', 'N/A'),
+                'Time B': m.get('team_b', {}).get('name', 'N/A'),
+                'Modalidade': modality_name, 
+                'Odds A': m.get('odds_a'),
+                'Odds Empate': m.get('odds_draw'),
+                'Odds B': m.get('odds_b'),
+                'Status': m.get('status')
+            })
+        st.dataframe(display_matches, use_container_width=True, hide_index=True)
     else:
         st.info("Nenhuma partida agendada no momento.")
 
 def render_finalize_matches_section():
     st.subheader("Finalizar Partida Agendada")
     
-    # Busca partidas abertas
     open_matches = match_service.get_open_matches()
     
     if not open_matches:
@@ -145,7 +191,13 @@ def render_finalize_matches_section():
             team_b = match.get('team_b', {}).get('name', 'Time B')
             match_id = match['id']
             
-            label = f"ID {match_id} | {team_a} vs {team_b}"
+            # --- CORREÇÃO APLICADA AQUI ---
+            # Verifica se 'modality' não é None antes de pegar o nome
+            modality_data = match.get('modality')
+            modality_name = modality_data.get('name', 'N/A') if modality_data else 'N/A'
+            # -------------------------------
+            
+            label = f"ID {match_id} | {modality_name}: {team_a} vs {team_b}" 
             formatted_match_names.append(label)
             match_map[label] = match_id
         
@@ -158,7 +210,8 @@ def render_finalize_matches_section():
             result = st.radio(
                 "Resultado Final", 
                 ['A', 'B', 'Empate'], 
-                horizontal=True
+                horizontal=True,
+                help="A = Time A venceu, B = Time B venceu"
             )
             
             submitted = st.form_submit_button("Finalizar Partida e Processar Apostas", use_container_width=True)
@@ -170,42 +223,39 @@ def render_finalize_matches_section():
                     match_id_to_finalize = match_map[selected_match_label]
                     st.info(f"Finalizando partida {match_id_to_finalize} com resultado: {result}...")
                     
-                    success = match_service.finalize_match(match_id_to_finalize, result)
+                    with st.spinner("Processando... Pode levar um momento."):
+                        success = match_service.finalize_match(match_id_to_finalize, result)
                     
                     if success:
                         st.success("Partida finalizada e apostas processadas com sucesso!")
+                        st.balloons()
                         st.rerun()
                     else:
-                        st.error("Ocorreu um erro ao finalizar a partida.")
+                        st.error("Ocorreu um erro ao finalizar a partida. Verifique os logs ou o saldo dos usuários.")
 
 # ==============================
 # FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO
 # ==============================
 def render():
     """Renderiza a página de administração"""
-    # Carrega CSS customizado
     load_admin_styles()
     
-    # Proteção de acesso
     if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
         st.error("Acesso negado. Por favor, faça o login primeiro.")
         st.stop()
     
-    if st.session_state['role'] != 'admin':
+    if st.session_state.get('role') != 'admin':
         st.error("Acesso negado. Esta área é restrita para administradores.")
         st.stop()
     
-    # Título principal
     st.title("Painel de Administração")
     
-    # Tabs principais
     tab_matches, tab_teams, tab_modalities = st.tabs([
-        "Gerenciar Partidas", 
-        "Gerenciar Times", 
-        "Gerenciar Modalidades"
+        "⚽ Gerenciar Partidas", 
+        "🏃 Gerenciar Times", 
+        "🏆 Gerenciar Modalidades"
     ])
     
-    # Renderiza cada tab
     with tab_modalities:
         render_modalities_tab()
     
@@ -214,3 +264,4 @@ def render():
     
     with tab_matches:
         render_matches_tab()
+
