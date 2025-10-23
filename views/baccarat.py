@@ -131,32 +131,36 @@ def render():
         with st.container():
             st.info(
                 """
-                Como funcionam as apostas no Baccarat ao vivo:
+                #### Como funciona o Baccarat ao Vivo?
 
-                • Fases do jogo:
-                  1) BETTING — período para registrar apostas (ex.: 15s).
-                  2) DEALING — cartas são reveladas e regras da terceira carta aplicadas.
-                  3) RESULT — mostra o vencedor e pagamentos; depois volta para BETTING.
+                • **Fases do jogo**:
+                1) **BETTING** — período para registrar apostas (15 segundos)
+                2) **DEALING** — cartas são reveladas e regras aplicadas
+                3) **RESULT** — mostra o vencedor e os pagamentos
 
-                • Tipos de aposta e pagamentos:
-                  - Jogador (Player): paga 1:1.
-                  - Banco (Banker): paga 0.95:1 (comissão simulada aplicada).
-                  - Empate (Tie): paga 8:1.
+                • **Tipos de aposta e pagamentos**:
+                - **Jogador (Player)**: paga 1:1  
+                    → Exemplo: aposta 10 reais → recebe **20 reais no total** se vencer.
+                - **Banco (Banker)**: paga 0.95:1  
+                    → Exemplo: aposta 10 reais → recebe **19,50 reais no total** se vencer.
+                - **Empate (Tie)**: paga 8:1  
+                    → Exemplo: aposta 10 reais → recebe **90 reais no total** se vencer.  
+                    (Se der empate e você apostou em Jogador ou Banco, a aposta é devolvida.)
 
-                • Regras importantes:
-                  - As mãos começam com duas cartas cada.
-                  - A pontuação é o total das cartas mod 10 (por exemplo, 7+8 = 5).
-                  - Regras da terceira carta são aplicadas automaticamente durante DEALING.
+                • **Regras básicas**:
+                - Cada mão recebe 2 cartas inicialmente.
+                - Pontuação = soma das cartas **mod 10** (exemplo: 7+8=15 → 5).
+                - A **terceira carta é distribuída automaticamente**, conforme as regras de pontuação do Baccarat.
 
-                • Como apostar aqui:
-                  - Insira o valor no campo "Valor da Aposta".
-                  - Clique no botão do lado correspondente (Jogador / Banco / Empate).
-                  - Se o saldo for insuficiente, a aposta será recusada.
+                • **Como apostar**:
+                1. Insira o valor desejado no campo "Valor da Aposta".
+                2. Clique no botão correspondente (Jogador / Banco / Empate).
+                3. Aguarde o resultado para receber o pagamento.
 
-                • Exemplo rápido:
-                  Apostando R$5 no Jogador e vencendo, você recebe R$5 de lucro (total R$10).
+                • **Exemplo rápido**:
+                Apostando 5 reais no Jogador e vencendo, você recebe 5 reais de lucro (total 10 reais).
 
-                Se precisar de mais detalhes sobre regras de terceira carta ou odds, abra a documentação do jogo ou contate o suporte.
+                Se precisar de mais detalhes sobre regras de terceira carta ou odds, consulte a documentação do jogo ou o suporte.
                 """
             )
     balance = user_service.get_user_balance(user_id)
