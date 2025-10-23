@@ -4,6 +4,111 @@ from core import match_service, bet_service, user_service
 from styles.betting import load_betting_styles, render_match_card, render_confirmation_box
 
 
+def render_bet_confirmation(match, intent, user_id=None):
+    """Renderiza o card de confirmação de aposta"""
+    if not user_id:
+        st.warning("Autenticação Necessária")
+        st.info("Você precisa estar logado para fazer apostas.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Cancelar", use_container_width=True):
+                st.session_state['bet_intent'] = None
+                st.rerun()
+        with col2:
+            if st.button("Fazer Login", type="primary", use_container_width=True):
+                st.session_state['view'] = 'login'
+                st.session_state['bet_intent'] = None
+                st.rerun()
+        return
+
+    balance = user_service.get_user_balance(user_id)
+    balance_brl = f"R$ {balance:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+    
+    st.markdown("---")
+    st.subheader("Confirmar Aposta")
+    
+    col1, col2, col3 = st.columns([2,1,2])
+    with col1:
+        st.markdown(f"**{intent['team_a']}**")
+    with col2:
+        st.markdown("**VS**")
+    with col3:
+        st.markdown(f"**{intent['team_b']}**")
+    
+    st.markdown(f"*{format_match_datetime(intent['match_datetime'])}*")
+    render_confirmation_box(intent['label'], intent['odds'], balance)
+    
+    st.subheader("Valor da Aposta")
+    
+    if 'bet_amount' not in st.session_state:
+        st.session_state['bet_amount'] = 10.0
+        
+    amount = st.number_input(
+        "Valor (R$)", 
+        min_value=1.00,
+        max_value=float(balance) if balance > 0 else 1.00,
+        value=st.session_state['bet_amount'],
+        step=5.00, 
+        format="%.2f",
+        key=f"bet_amount_input_{match['id']}"  # Unique key per match
+    )
+    
+    st.session_state['bet_amount'] = amount
+    
+    if amount > 0:
+        potential_win = amount * intent['odds']
+        profit = potential_win - amount
+        
+        potential_win_brl = f"R$ {potential_win:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+        profit_brl = f"R$ {profit:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+        
+        st.markdown(f"""
+            <div class="potential-win-box">
+                <div class="potential-row">
+                    <span class="potential-label">Retorno Potencial:</span>
+                    <span class="potential-value win">{potential_win_brl}</span>
+                </div>
+                <div class="potential-row">
+                    <span class="potential-label">Lucro Líquido:</span>
+                    <span class="potential-value profit">{profit_brl}</span>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        if st.button("Cancelar", use_container_width=True, key=f"cancel_bet_{match['id']}"):
+            st.session_state['bet_intent'] = None
+            st.session_state['bet_amount'] = 10.0
+            st.rerun()
+    
+    with col2:
+        if st.button("Confirmar Aposta", type="primary", use_container_width=True, key=f"confirm_bet_{match['id']}"):
+            if amount > balance:
+                st.error("Saldo insuficiente para esta aposta.")
+            elif amount <= 0:
+                st.error("O valor deve ser maior que zero.")
+            else:
+                success = bet_service.create_bet(
+                    user_id=user_id,
+                    match_id=intent['match_id'],
+                    amount=amount,
+                    prediction=intent['prediction']
+                )
+                
+                if success:
+                    st.success("Aposta realizada com sucesso!")
+                    st.balloons()
+                    st.session_state.user_balance = user_service.get_user_balance(user_id)
+                else:
+                    st.error("Erro ao registrar aposta. Tente novamente.")
+                
+                st.session_state['bet_intent'] = None
+                st.session_state['bet_amount'] = 10.0
+                st.rerun()
+
+
 def format_match_datetime(dt):
     """Format a match datetime value for display.
 
@@ -45,9 +150,9 @@ def render():
     load_betting_styles()
     
     st.markdown("""
-        <div style="text-align: center; margin-bottom: 2rem;">
-            <h1>Wyden 365 - Apostas Esportivas</h1>
-            <p style="color: hsl(220 10% 60%); font-size: 1.1rem;">
+        <div style="text-align: center; margin: 0;">
+            <h1 style="margin: 0.5rem 0;">Wyden 365 - Apostas Esportivas</h1>
+            <p style="color: hsl(220 10% 60%); font-size: 1.1rem; margin: 0.5rem 0;">
                 Clique em qualquer opção de aposta para começar!
             </p>
         </div>
@@ -63,6 +168,9 @@ def render():
         st.session_state['bet_intent'] = None
 
     st.subheader("Partidas Disponíveis")
+    
+    # Container para âncora de rolagem
+    bet_anchor = st.empty()
     
     for match in matches:
         team_a = match.get('team_a', {})
@@ -208,121 +316,29 @@ def render():
                         'team_b': team_b_name,
                         'match_datetime': match['match_datetime']
                     }
+                    # Adiciona um identificador para rolagem no rerun
+                    st.session_state['scroll_to_bet'] = True
                     st.rerun()
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-    if st.session_state['bet_intent'] is not None:
-        
-        intent = st.session_state['bet_intent']
-        
-        # Verifica se o usuário está logado
-        if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
-            st.warning(" Autenticação Necessária")
-            st.info("Você precisa estar logado para fazer apostas.")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                if st.button("Cancelar", use_container_width=True):
-                    st.session_state['bet_intent'] = None
-                    st.rerun()
-            
-            with col2:
-                if st.button("Fazer Login", type="primary", use_container_width=True):
-                    st.session_state['view'] = 'login'
-                    st.session_state['bet_intent'] = None
-                    st.rerun()
-        
-        else:
-            user_id = st.session_state['user_id']
-            balance = user_service.get_user_balance(user_id)
-            
-            balance_brl = f"R$ {balance:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-            
-            # Mostra informações da aposta selecionada
-            st.markdown("---")
-            st.subheader("Confirmar Aposta")
-            
-            # Informações da partida
-            col1, col2, col3 = st.columns([2,1,2])
-            with col1:
-                st.markdown(f"**{intent['team_a']}**")
-            with col2:
-                st.markdown("**VS**")
-            with col3:
-                st.markdown(f"**{intent['team_b']}**")
-            
-            st.markdown(f"*{format_match_datetime(intent['match_datetime'])}*")
-            
-            render_confirmation_box(intent['label'], intent['odds'], balance)
-            
-            st.subheader("Valor da Aposta")
-            
-            if 'bet_amount' not in st.session_state:
-                st.session_state['bet_amount'] = 10.0
-            
-            amount = st.number_input(
-                "Valor (R$)", 
-                min_value=1.00,
-                max_value=float(balance) if balance > 0 else 1.00,
-                value=st.session_state['bet_amount'],
-                step=5.00, 
-                format="%.2f",
-                key="bet_amount_input"
-            )
-            
-            st.session_state['bet_amount'] = amount
-            
-            if amount > 0:
-                potential_win = amount * intent['odds']
-                profit = potential_win - amount
-                
-                potential_win_brl = f"R$ {potential_win:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-                profit_brl = f"R$ {profit:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-                
-                st.markdown(f"""
-                    <div class="potential-win-box">
-                        <div class="potential-row">
-                            <span class="potential-label">Retorno Potencial:</span>
-                            <span class="potential-value win">{potential_win_brl}</span>
-                        </div>
-                        <div class="potential-row">
-                            <span class="potential-label">Lucro Líquido:</span>
-                            <span class="potential-value profit">{profit_brl}</span>
-                        </div>
-                    </div>
+        # Se esta é a partida selecionada, mostra o card de confirmação aqui
+        if st.session_state.get('bet_intent') and st.session_state['bet_intent'].get('match_id') == match['id']:
+            # Âncora para rolagem automática
+            if st.session_state.get('scroll_to_bet'):
+                bet_anchor.markdown('<div id="bet-confirmation"></div>', unsafe_allow_html=True)
+                st.markdown("""
+                    <script>
+                        const element = document.getElementById('bet-confirmation');
+                        if (element) {
+                            setTimeout(() => {
+                                element.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'center' 
+                                });
+                            }, 100);
+                        }
+                    </script>
                 """, unsafe_allow_html=True)
+                st.session_state['scroll_to_bet'] = False
             
-            col1, col2 = st.columns([1, 2])
-            
-            with col1:
-                if st.button("Cancelar", use_container_width=True, key="cancel_bet"):
-                    st.session_state['bet_intent'] = None
-                    st.session_state['bet_amount'] = 10.0
-                    st.rerun()
-            
-            with col2:
-                if st.button("Confirmar Aposta", type="primary", use_container_width=True, key="confirm_bet"):
-                    if amount > balance:
-                        st.error("Saldo insuficiente para esta aposta.")
-                    elif amount <= 0:
-                        st.error("O valor deve ser maior que zero.")
-                    else:
-                        success = bet_service.create_bet(
-                            user_id=user_id,
-                            match_id=intent['match_id'],
-                            amount=amount,
-                            prediction=intent['prediction']
-                        )
-                        
-                        if success:
-                            st.success("Aposta realizada com sucesso!")
-                            st.balloons()
-                            st.session_state.user_balance = user_service.get_user_balance(user_id)
-                        else:
-                            st.error("Erro ao registrar aposta. Tente novamente.")
-                        
-                        st.session_state['bet_intent'] = None
-                        st.session_state['bet_amount'] = 10.0
-                        st.rerun()
+            user_id = st.session_state.get('user_id')
+            render_bet_confirmation(match, st.session_state['bet_intent'], user_id)

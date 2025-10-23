@@ -59,10 +59,18 @@ def load_betting_styles():
        LAYOUT GERAL - TEMA ESCURO
     ============================== */
     .main .block-container {{
-        padding: 2rem 1rem !important;
+        padding-top: 0.5rem !important;  /* Reduz padding superior */
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-bottom: 1rem !important;
         max-width: 1400px !important;
         background-color: hsl(var(--background)) !important;
         font-family: 'Inter', sans-serif !important;
+    }}
+    
+    /* Remove padding padrão do Streamlit */
+    .stApp > header {{
+        display: none !important;
     }}
 
     .stApp {{
@@ -84,7 +92,8 @@ def load_betting_styles():
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         font-size: 2.5rem !important;
-        margin-bottom: 1rem !important;
+        margin: 0.5rem 0 !important;
+        line-height: 1.2 !important;
     }}
 
     /* ==============================
