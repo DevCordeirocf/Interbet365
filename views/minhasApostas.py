@@ -53,20 +53,17 @@ def render():
         st.error("✕ Acesso negado. Por favor, faça o login primeiro.")
         st.stop()
     
-    # Header com ícone
+    # --- CABEÇALHO CORRIGIDO ---
+    # O HTML estava fora do markdown e havia títulos duplicados
     st.markdown("""
-    """, unsafe_allow_html=True)
-    
-    st.title(" Minhas Apostas")
-    
         <div class="icon-header">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="hsl(11, 100%, 60%)" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
         </div>
     """, unsafe_allow_html=True)
-    
-    st.title(" Minhas Apostas")
+    st.title("Minhas Apostas")
+    # --- FIM DA CORREÇÃO ---
     
     # Obtém dados do usuário
     user_id = st.session_state['user_id']
@@ -131,31 +128,25 @@ def render():
                     odd = extract_odd(bet)
 
                 potential = amount * (float(odd) if odd is not None else 1.0)
-                match_info = bet.get('match', {})
-                team_a = match_info.get('team_a', {}).get('name', 'Time A')
-                team_b = match_info.get('team_b', {}).get('name', 'Time B')
                 
-                # Extrai valores com formatação correta
-                amount = float(bet.get('bet_amount', 0))
-                odd = extract_odd(bet)
-                potential = amount * odd
+                # --- BLOCO DUPLICADO REMOVIDO DAQUI ---
+                # O código anterior tinha um bloco duplicado que
+                # sobrescrevia a odd correta com uma errada.
 
                 # Monta o header do expander
                 header = f"Aposta de {format_brl(amount)} • {team_a} vs {team_b}"
                 
                 with st.expander(header):
-                        st.markdown(f"**Partida:** {team_a} vs {team_b}")
-                        st.markdown(f"**Sua Previsão:** {prediction or bet.get('prediction', '-')}")
-                        st.markdown(f"**Valor Apostado:** {format_brl(amount)}")
-                        st.markdown(f"**Odd:** {format_odd(odd)}")
-                        st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
-                        st.markdown(f"**Status:** {bet.get('status', '-')}")
                     st.markdown(f"**Partida:** {team_a} vs {team_b}")
-                    st.markdown(f"**Sua Previsão:** {bet.get('prediction', '-')}")
+                    st.markdown(f"**Sua Previsão:** {prediction or bet.get('prediction', '-')}")
                     st.markdown(f"**Valor Apostado:** {format_brl(amount)}")
                     st.markdown(f"**Odd:** {format_odd(odd)}")
                     st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
                     st.markdown(f"**Status:** {bet.get('status', '-')}")
+                
+                # --- BLOCO DUPLICADO E MAL FORMATADO REMOVIDO DAQUI ---
+                # Havia outro bloco de `st.markdown` duplicado
+                # e fora do `with st.expander`
 
     with tab_finished:
         st.subheader("Histórico de Apostas")
@@ -175,7 +166,6 @@ def render():
             # Exibe as apostas finalizadas como cards customizados
             for bet in finished_bets:
                 match_info = bet.get('match', {}) or {}
-                match_info = bet.get('match', {})
                 team_a = match_info.get('team_a', {}).get('name', 'Time A')
                 team_b = match_info.get('team_b', {}).get('name', 'Time B')
 
@@ -203,13 +193,25 @@ def render():
                     odd = extract_odd(bet)
 
                 potential = amount * (float(odd) if odd is not None else 1.0)
-                odd = extract_odd(bet)
-                potential = amount * odd
+                
+                # --- BLOCO DUPLICADO REMOVIDO DAQUI ---
+                # O código anterior sobrescrevia a odd correta
+                # com `odd = extract_odd(bet)`
+                
                 status = bet.get('status', '-')
                 result = bet.get('result', '')
                 
                 # Define cor do status
                 status_color = "#10b981" if status == "Ganhou" else "#ef4444" if status == "Perdeu" else "#f59e0b"
+
+                # Define o valor do retorno com base no status
+                payout_display = 0.0
+                if status == "Ganhou":
+                    payout_display = potential
+                elif status == "Perdeu":
+                    payout_display = 0.0 # Perdeu
+                else: # Empate/Cancelado
+                    payout_display = amount # Devolve a aposta
 
                 # Renderiza card customizado
                 html = f"""
@@ -222,7 +224,7 @@ def render():
                         <span>Previsão: <strong style="color:white;">{bet.get('prediction', '-')}</strong></span>
                         <span>Valor: <strong style="color:white;">{format_brl(amount)}</strong></span>
                         <span>Odd: <strong style="color:white;">{format_odd(odd)}</strong></span>
-                        <span>Retorno: <strong style="color:{status_color};">{format_brl(potential)}</strong></span>
+                        <span>Retorno: <strong style="color:{status_color};">{format_brl(payout_display)}</strong></span>
                     </div>
                 </div>
                 """
