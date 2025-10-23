@@ -1,7 +1,6 @@
 import streamlit as st
 
 def load_wallet_styles():
-    """Carrega estilos específicos para a página de carteira com design moderno"""
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');

@@ -24,5 +24,6 @@ __all__ = [
 	'load_admin_styles',
     'load_wallet_styles',
     'load_mybets_styles',
-	'load_sidebar_styles',
+    'load_baccarat_styles',
+    'load_sidebar_styles',
 ]

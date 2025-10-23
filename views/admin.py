@@ -7,13 +7,11 @@ from styles import load_admin_styles
 # FUNÇÕES AUXILIARES
 # ==============================
 def format_for_selectbox(items, key_col='id', value_col='name'):
-    """Transforma uma lista de dicts em opções para st.selectbox."""
     options = {item[key_col]: item[value_col] for item in items}
     formatted_options = [item[value_col] for item in items]
     return options, formatted_options
 
 def render_modalities_tab():
-    """Renderiza a tab de modalidades"""
     st.subheader("Adicionar Nova Modalidade")
     
     with st.form("modality_form", clear_on_submit=True):
@@ -37,7 +35,6 @@ def render_modalities_tab():
         st.info("Nenhuma modalidade cadastrada ainda.")
 
 def render_teams_tab():
-    """Renderiza a tab de times"""
     st.subheader("Adicionar Novo Time")
     modalities_data = match_service.get_all_modalities()
     
@@ -47,13 +44,11 @@ def render_teams_tab():
         with st.form("team_form", clear_on_submit=True):
             team_name = st.text_input("Nome do Time", placeholder="Ex: Time da Computação")
             
-            # Prepara dados para o selectbox
             modality_map, modality_names = format_for_selectbox(modalities_data, 'id', 'name')
             selected_modality_name = st.selectbox("Modalidade do Time", modality_names)
             
             if st.form_submit_button("Criar Time", use_container_width=True):
                 if team_name:
-                    # Encontra o ID da modalidade selecionada
                     selected_modality_id = [k for k, v in modality_map.items() if v == selected_modality_name][0]
                     match_service.create_team(team_name, selected_modality_id)
                     st.success(f"Time '{team_name}' criado com sucesso!")
@@ -71,7 +66,6 @@ def render_teams_tab():
         st.info("Nenhum time cadastrado ainda.")
 
 def render_matches_tab():
-    """Renderiza a tab de partidas"""
     st.subheader("Criar Nova Partida")
     teams_data = match_service.get_all_teams()
     
@@ -135,7 +129,6 @@ def render_matches_tab():
         st.info("Nenhuma partida agendada no momento.")
 
 def render_finalize_matches_section():
-    """Renderiza a seção de finalizar partidas"""
     st.subheader("Finalizar Partida Agendada")
     
     # Busca partidas abertas

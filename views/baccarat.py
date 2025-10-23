@@ -4,57 +4,52 @@ from streamlit_autorefresh import st_autorefresh
 from core import user_service, game_service
 import os
 
-# --- Importa a função de estilo ---
 from styles.baccarat import load_baccarat_styles
 
-# --- Funções de Interface ---
 
 def render_baccarat_table(player_cards, banker_cards, player_value, banker_value):
-    """Renderiza a mesa de Baccarat usando st.columns para o layout."""
     p_cards = player_cards + [None] * (3 - len(player_cards))
     b_cards = banker_cards + [None] * (3 - len(banker_cards))
     image_folder = "assets/cards/"
 
-    # --- Container Geral ---
     with st.container():
         
-        col_player, col_banker = st.columns(2) # Divide a mesa
+        col_player, col_banker = st.columns(2) 
 
+        # --- COLUNA DO JOGADOR ---
         with col_player:
-            st.markdown('<div class="player-area"><h4>Jogador</h4></div>', unsafe_allow_html=True)
+            st.markdown('<div class="player-area"><h4>Jogador</h4></div>', unsafe_allow_html=True) 
             
-            # Usa colunas para posicionar os 3 slots
             slot_cols = st.columns(3) 
+            
             for i in range(3):
                 with slot_cols[i]:
                     card_name = p_cards[i]
-                    is_third = (i == 2) # É a terceira carta?
+                    is_third = (i == 2) 
                     
-                    with st.container(): # Container para aplicar rotação se necessário
-                        # Aplica a classe de rotação SE for a terceira carta
+                    with st.container(): 
                         rotation_class = "third-card-rotated" if is_third else ""
-                        st.markdown(f'<div class="card-container {rotation_class}">', unsafe_allow_html=True)
+                        st.markdown(f'<div class="card-container {rotation_class} d-flex align-items-center">', unsafe_allow_html=True)
                         
                         if card_name:
                             image_path = os.path.join(image_folder, f"{card_name}.png")
                             if os.path.exists(image_path):
-                                st.image(image_path, width=100) # Usa st.image
+                                st.image(image_path, width=100) 
                             else:
                                 st.warning(f"⚠️{card_name}.png")
                                 print(f"AVISO: Imagem não encontrada '{image_path}'")
                         else:
-                             # Slot vazio (usa CSS)
                              st.markdown('<div class="card-slot-empty"></div>', unsafe_allow_html=True)
                         
-                        st.markdown('</div>', unsafe_allow_html=True) # Fecha o div do container da carta
+                        st.markdown('</div>', unsafe_allow_html=True) 
 
-            # Valor do Jogador
             st.markdown(f'<div class="baccarat-values player-value"><span class="value-label">{player_value}</span></div>', unsafe_allow_html=True)
 
         with col_banker:
             st.markdown('<div class="banker-area"><h4>Banco</h4></div>', unsafe_allow_html=True)
             
             slot_cols = st.columns(3)
+            
             for i in range(3):
                  with slot_cols[i]:
                     card_name = b_cards[i]
@@ -62,7 +57,7 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                     
                     with st.container():
                         rotation_class = "third-card-rotated" if is_third else ""
-                        st.markdown(f'<div class="card-container {rotation_class}">', unsafe_allow_html=True)
+                        st.markdown(f'<div class="card-container {rotation_class} d-flex align-items-center">', unsafe_allow_html=True)
                         if card_name:
                             image_path = os.path.join(image_folder, f"{card_name}.png")
                             if os.path.exists(image_path):
@@ -73,13 +68,10 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                              st.markdown('<div class="card-slot-empty"></div>', unsafe_allow_html=True)
                         st.markdown('</div>', unsafe_allow_html=True)
 
-            # Valor do Banco
             st.markdown(f'<div class="baccarat-values banker-value"><span class="value-label">{banker_value}</span></div>', unsafe_allow_html=True)
 
 
 def display_history(history, max_cols=12, max_rows=6):
-    """Exibe o histórico de resultados em formato de grade (Big Road)."""
-    # (Código do histórico permanece o mesmo)
     st.subheader("Histórico")
     history_map = {"Player": "🔵", "Banker": "🔴", "Tie":    "🟢"}
     grid = [['' for _ in range(max_cols)] for _ in range(max_rows)]
@@ -110,13 +102,10 @@ def display_history(history, max_cols=12, max_rows=6):
     st.markdown(html_table, unsafe_allow_html=True)
 
 
-# --- Lógica Principal da View ---
 
 def render():
-    # --- CARREGA OS ESTILOS DO BACCARAT ---
     load_baccarat_styles() 
     
-    # --- Proteção, Loop, Estado ---
     if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
         st.error("🔒 Acesso negado. Por favor, faça o login para jogar."); st.stop()
     st_autorefresh(interval=1000, key="game_refresher")
@@ -125,19 +114,16 @@ def render():
     state = st.session_state.baccarat_state
     user_id = st.session_state['user_id']
 
-    # --- Header ---
     st.title("🎲 Baccarat ao Vivo")
     balance = user_service.get_user_balance(user_id)
     balance_placeholder = st.empty()
     if balance is not None: balance_placeholder.metric(label="Meu Saldo", value=f"R$ {balance:.2f}")
     st.divider()
 
-    # --- Lógica das Fases ---
 
-    # --- FASE DE APOSTAS ---
     if state["phase"] == "BETTING":
         st.subheader(f"Faça sua aposta! Tempo restante: {state['timer']}s")
-        render_baccarat_table([], [], 0, 0) # Mesa vazia
+        render_baccarat_table([], [], 0, 0) 
         bet_amount = st.number_input("Valor da Aposta (R$)", min_value=1.00, value=5.00, step=1.00, format="%.2f", key="bet_amount_input")
         col1, col2, col3 = st.columns(3)
         bet_on = None
