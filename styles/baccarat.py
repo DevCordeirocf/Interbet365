@@ -10,10 +10,7 @@ def load_baccarat_styles():
     """
     st.markdown("""
     <style>
-        /* --- Áreas do Jogador e Banco (REVERTIDO) --- */
-        /* Removemos o fundo, borda e altura para "aproximar" os elementos. */
-        /* Agora, apenas os títulos (h4) dentro dessas classes são afetados. */
-        
+        /* --- Áreas do Jogador e Banco --- */
         .player-area h4 {
              margin-bottom: 10px; 
              font-weight: bold;
@@ -30,13 +27,12 @@ def load_baccarat_styles():
              color: #e74c3c; /* Vermelho Banco */
         }
 
-        /* --- Container para UMA carta (st.image já cuida do tamanho) --- */
+        /* --- Container para UMA carta --- */
         .card-container {
-            display: flex; /* Para centralizar o slot */
+            display: flex; 
             justify-content: center;
             align-items: center;
-            min-height: 180px; /* Altura para carta normal ou rotacionada */
-            padding: 5px; /* Pequeno espaçamento interno */
+            min-height: 180px; 
         }
 
         /* --- Slot VAZIO (Quando não há carta) --- */
@@ -51,16 +47,15 @@ def load_baccarat_styles():
             align-items: center;
         }
 
-         /* --- Classe para rotacionar a TERCEIRA CARTA (container ou imagem) --- */
+         /* --- Classe para rotacionar a TERCEIRA CARTA --- */
         .third-card-rotated {
             transform: rotate(90deg);
         }
 
-
         /* --- Valores de Baccarat --- */
         .baccarat-values {
             text-align: center;
-            margin-top: 10px; /* (REVERTIDO) Removemos o 'margin-top: auto' */
+            margin-top: 10px; 
             padding: 5px 0;
         }
         .value-label {
@@ -78,6 +73,17 @@ def load_baccarat_styles():
         .baccarat-grid table { border-collapse: collapse; margin: 10px auto; }
         .baccarat-grid th, .baccarat-grid td { border: 1px solid #555; padding: 2px; text-align: center; min-width: 30px; height: 30px; font-size: 16px; }
         .baccarat-grid td { background-color: #333; }
+
+        /* --- CORREÇÃO: Diminui o espaço entre as colunas das cartas --- */
+        /* Streamlit gera divs com classes como esta dentro de st.columns */
+        /* O seletor [data-testid="stVerticalBlock"]>div pode ser necessário se a classe mudar */
+        .player-area div[data-testid="stHorizontalBlock"] > div,
+        .banker-area div[data-testid="stHorizontalBlock"] > div {
+            padding-left: 0.25rem !important;  /* Diminui o padding esquerdo */
+            padding-right: 0.25rem !important; /* Diminui o padding direito */
+        }
+        /* ----------------------------------------------------------------- */
+
     </style>
     """, unsafe_allow_html=True)
 

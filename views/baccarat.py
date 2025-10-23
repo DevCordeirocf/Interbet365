@@ -20,45 +20,45 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
         
         col_player, col_banker = st.columns(2) # Divide a mesa
 
-        # --- COLUNA DO JOGADOR (REVERTIDA) ---
+        # --- COLUNA DO JOGADOR ---
         with col_player:
-            # (REVERTIDO) Apenas o título com a classe para cor
             st.markdown('<div class="player-area"><h4>Jogador</h4></div>', unsafe_allow_html=True) 
             
-            # Usa colunas para posicionar os 3 slots
+            # --- CORREÇÃO: Removemos o gap, será controlado via CSS ---
             slot_cols = st.columns(3) 
+            # --------------------------------------------------------
+            
             for i in range(3):
                 with slot_cols[i]:
                     card_name = p_cards[i]
-                    is_third = (i == 2) # É a terceira carta?
+                    is_third = (i == 2) 
                     
-                    with st.container(): # Container para aplicar rotação se necessário
+                    with st.container(): 
                         rotation_class = "third-card-rotated" if is_third else ""
-                        st.markdown(f'<div class="card-container {rotation_class}">', unsafe_allow_html=True)
+                        st.markdown(f'<div class="card-container {rotation_class} d-flex align-items-center">', unsafe_allow_html=True)
                         
                         if card_name:
                             image_path = os.path.join(image_folder, f"{card_name}.png")
                             if os.path.exists(image_path):
-                                st.image(image_path, width=100) # Usa st.image
+                                st.image(image_path, width=100) 
                             else:
                                 st.warning(f"⚠️{card_name}.png")
                                 print(f"AVISO: Imagem não encontrada '{image_path}'")
                         else:
                              st.markdown('<div class="card-slot-empty"></div>', unsafe_allow_html=True)
                         
-                        st.markdown('</div>', unsafe_allow_html=True) # Fecha o div do container da carta
+                        st.markdown('</div>', unsafe_allow_html=True) 
 
-            # Valor do Jogador (agora fora do wrapper)
             st.markdown(f'<div class="baccarat-values player-value"><span class="value-label">{player_value}</span></div>', unsafe_allow_html=True)
-            
-            # (REVERTIDO) Removemos o </div> de fechamento da área
 
-        # --- COLUNA DO BANCO (REVERTIDA) ---
+        # --- COLUNA DO BANCO ---
         with col_banker:
-            # (REVERTIDO) Apenas o título com a classe para cor
             st.markdown('<div class="banker-area"><h4>Banco</h4></div>', unsafe_allow_html=True)
             
+            # --- CORREÇÃO: Removemos o gap, será controlado via CSS ---
             slot_cols = st.columns(3)
+            # --------------------------------------------------------
+            
             for i in range(3):
                  with slot_cols[i]:
                     card_name = b_cards[i]
@@ -66,7 +66,7 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                     
                     with st.container():
                         rotation_class = "third-card-rotated" if is_third else ""
-                        st.markdown(f'<div class="card-container {rotation_class}">', unsafe_allow_html=True)
+                        st.markdown(f'<div class="card-container {rotation_class} d-flex align-items-center">', unsafe_allow_html=True)
                         if card_name:
                             image_path = os.path.join(image_folder, f"{card_name}.png")
                             if os.path.exists(image_path):
@@ -79,6 +79,7 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
 
             st.markdown(f'<div class="baccarat-values banker-value"><span class="value-label">{banker_value}</span></div>', unsafe_allow_html=True)
 
+# ... (resto do código permanece igual) ...
 
 def display_history(history, max_cols=12, max_rows=6):
     """Exibe o histórico de resultados em formato de grade (Big Road)."""
