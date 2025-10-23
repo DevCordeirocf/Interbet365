@@ -1,7 +1,6 @@
-# core/match_service.py
 
 import streamlit as st
-from core.db import init_supabase_client # Importa o conector
+from core.db import init_supabase_client
 from core.user_service import update_user_balance
 
 # --- LÓGICA DO ADMIN: MODALIDADES ---
@@ -90,11 +89,11 @@ def finalize_match(match_id: int, result: str):
         }
         winning_odd = float(odds_map[result])
 
-        # --- 2. Busca TODAS as apostas pendentes para esta partida ---
+        # 2. Busca TODAS as apostas pendentes para esta partida 
         bets_response = supabase.table('bets').select('*').eq('match_id', match_id).eq('status', 'Pendente').execute()
         pending_bets = bets_response.data
         
-        # --- 3. Faz o loop e paga os vencedores ---
+        # 3. Faz o loop e paga os vencedores
         st.info(f"Processando {len(pending_bets)} apostas pendentes...")
         
         for bet in pending_bets:
@@ -117,7 +116,7 @@ def finalize_match(match_id: int, result: str):
                 supabase.table('bets').update({'status': 'Perdida'}).eq('id', bet_id).execute()
                 print(f"Aposta {bet_id} perdida.")
 
-        # --- 4. Finalmente, atualiza a partida para 'Finalizado' ---
+        #  4 atualiza a partida para 'Finalizado' 
         supabase.table('matches').update({
             'status': 'Finalizado',
             'result': result

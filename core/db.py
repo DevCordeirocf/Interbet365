@@ -6,7 +6,7 @@ from supabase import create_client, Client
 def init_supabase_client() -> Client | None:
     try:
         url = st.secrets["supabase_url"]
-        key = st.secrets["supabase_service_key"] # A chave secreta (service_role)
+        key = st.secrets["supabase_service_key"]
         
         return create_client(url, key)
     except KeyError:

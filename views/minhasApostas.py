@@ -1,78 +1,59 @@
-# views/minhasApostas.py
 
 import streamlit as st
 import locale
 from core import bet_service
 from styles.mybets import load_mybets_styles
 
-# Tenta configurar locale pt_BR; se falhar, usaremos fallback
 try:
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 except Exception:
     try:
         locale.setlocale(locale.LC_ALL, 'pt_BR')
     except Exception:
-        # não interrompe; usaremos fallback na formatação
         pass
 
 def format_brl(value: float) -> str:
-    """Formata número como Real brasileiro (R$ 10.000,00) com fallback."""
     try:
         return locale.currency(value, grouping=True)
     except Exception:
         s = f"{value:,.2f}"
-        # transforma 1,234,567.89 -> 1.234.567,89
         s = s.replace(',', 'X').replace('.', ',').replace('X', '.')
         return f"R$ {s}"
 
 def format_odd(odd: float) -> str:
-    """Formata odd com fallback."""
     try:
         return f"{odd:.2f}x"
     except Exception:
         return str(odd)
 
 def extract_odd(bet: dict) -> float:
-    """Tenta extrair a odd de diversos campos possíveis."""
-    # Tenta alguns campos comuns para a odd
     for key in ('odd', 'odds', 'odds_a', 'odds_b', 'odd_value'):
         if key in bet and bet.get(key) is not None:
             try:
                 return float(bet.get(key))
             except Exception:
                 continue
-    # fallback: retorna 1.0 se não encontrar
     return 1.0
 
 def render():
-    # Carrega estilos CSS customizados
     load_mybets_styles()
     
-    # Bloco de proteção
     if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
         st.error("✕ Acesso negado. Por favor, faça o login primeiro.")
         st.stop()
     
-    # Header com ícone
     st.markdown("""
-    """, unsafe_allow_html=True)
-    
-    st.title(" Minhas Apostas")
-    
         <div class="icon-header">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="hsl(11, 100%, 60%)" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
         </div>
     """, unsafe_allow_html=True)
+    st.title("Minhas Apostas")
     
-    st.title(" Minhas Apostas")
-    
-    # Obtém dados do usuário
     user_id = st.session_state['user_id']
     all_bets = bet_service.get_bets_by_user(user_id)
     
-    # Verifica se há apostas
     if not all_bets:
         st.markdown("""
             <div class="empty-state">
@@ -82,7 +63,6 @@ def render():
         """, unsafe_allow_html=True)
         st.stop()
         
-    # Separa as apostas em abas
     tab_pending, tab_finished = st.tabs([" Apostas Pendentes", " Apostas Finalizadas"])
     
     with tab_pending:
@@ -101,15 +81,12 @@ def render():
             st.markdown("---")
             
             for bet in pending_bets:
-                # Pega os nomes dos times (o JOIN já foi feito no bet_service)
                 match_info = bet.get('match', {}) or {}
                 team_a = match_info.get('team_a', {}).get('name', 'Time A')
                 team_b = match_info.get('team_b', {}).get('name', 'Time B')
 
-                # Extrai valores com formatação correta
                 amount = float(bet.get('bet_amount', 0))
 
-                # Determina a odd correta a partir dos dados da partida
                 odds_a = None
                 odds_b = None
                 odds_draw = None
@@ -131,27 +108,12 @@ def render():
                     odd = extract_odd(bet)
 
                 potential = amount * (float(odd) if odd is not None else 1.0)
-                match_info = bet.get('match', {})
-                team_a = match_info.get('team_a', {}).get('name', 'Time A')
-                team_b = match_info.get('team_b', {}).get('name', 'Time B')
                 
-                # Extrai valores com formatação correta
-                amount = float(bet.get('bet_amount', 0))
-                odd = extract_odd(bet)
-                potential = amount * odd
-
-                # Monta o header do expander
                 header = f"Aposta de {format_brl(amount)} • {team_a} vs {team_b}"
                 
                 with st.expander(header):
-                        st.markdown(f"**Partida:** {team_a} vs {team_b}")
-                        st.markdown(f"**Sua Previsão:** {prediction or bet.get('prediction', '-')}")
-                        st.markdown(f"**Valor Apostado:** {format_brl(amount)}")
-                        st.markdown(f"**Odd:** {format_odd(odd)}")
-                        st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
-                        st.markdown(f"**Status:** {bet.get('status', '-')}")
                     st.markdown(f"**Partida:** {team_a} vs {team_b}")
-                    st.markdown(f"**Sua Previsão:** {bet.get('prediction', '-')}")
+                    st.markdown(f"**Sua Previsão:** {prediction or bet.get('prediction', '-')}")
                     st.markdown(f"**Valor Apostado:** {format_brl(amount)}")
                     st.markdown(f"**Odd:** {format_odd(odd)}")
                     st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
@@ -172,16 +134,13 @@ def render():
             st.write(f"**{len(finished_bets)} aposta(s) finalizada(s)**")
             st.markdown("---")
             
-            # Exibe as apostas finalizadas como cards customizados
             for bet in finished_bets:
                 match_info = bet.get('match', {}) or {}
-                match_info = bet.get('match', {})
                 team_a = match_info.get('team_a', {}).get('name', 'Time A')
                 team_b = match_info.get('team_b', {}).get('name', 'Time B')
 
                 amount = float(bet.get('bet_amount', 0))
 
-                # extrai odds da partida quando disponível
                 odds_a = None
                 odds_b = None
                 odds_draw = None
@@ -203,15 +162,26 @@ def render():
                     odd = extract_odd(bet)
 
                 potential = amount * (float(odd) if odd is not None else 1.0)
-                odd = extract_odd(bet)
-                potential = amount * odd
+                
                 status = bet.get('status', '-')
                 result = bet.get('result', '')
                 
-                # Define cor do status
-                status_color = "#10b981" if status == "Ganhou" else "#ef4444" if status == "Perdeu" else "#f59e0b"
+                status_normalized = status.lower()
+                
+                is_winner = (status_normalized == "ganha" or status_normalized == "ganhou")
+                is_loser = (status_normalized == "perdeu")
+                
+                status_color = "#10b981" if is_winner else "#ef4444" if is_loser else "#f59e0b"
 
-                # Renderiza card customizado
+                payout_display = 0.0
+                if is_winner:
+                    payout_display = potential 
+                elif is_loser:
+                    payout_display = 0.0 
+                else: 
+                    payout_display = amount
+                
+             
                 html = f"""
                 <div style="display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;margin-bottom:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);transition:all 0.3s ease;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
@@ -222,7 +192,7 @@ def render():
                         <span>Previsão: <strong style="color:white;">{bet.get('prediction', '-')}</strong></span>
                         <span>Valor: <strong style="color:white;">{format_brl(amount)}</strong></span>
                         <span>Odd: <strong style="color:white;">{format_odd(odd)}</strong></span>
-                        <span>Retorno: <strong style="color:{status_color};">{format_brl(potential)}</strong></span>
+                        <span>Retorno: <strong style="color:{status_color};">{format_brl(payout_display)}</strong></span>
                     </div>
                 </div>
                 """

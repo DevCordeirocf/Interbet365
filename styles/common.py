@@ -1,7 +1,3 @@
-"""
-styles/common.py
-Estilos para componentes comuns (marca, rodapé, etc)
-"""
 
 import streamlit as st
 from .config import COLOR_PRIMARY, COLOR_SECONDARY

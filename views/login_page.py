@@ -1,35 +1,26 @@
-# views/login_page.py
-
 import streamlit as st
 from core.db import init_supabase_client
 from core import user_service
 from styles import load_auth_styles, render_brand, render_footer
 
-# Inicializa o cliente Supabase para ser usado nesta view
 @st.cache_resource
 def get_supabase_client():
     return init_supabase_client()
 supabase = get_supabase_client()
 
 def render():
-    """Renderiza a tela de login/registro seguindo o padrão visual do projeto"""
     
-    # Carrega os estilos de autenticação
     load_auth_styles()
     
-    # Renderiza a marca
     render_brand(subtitle="Apostas Universitárias")
     
-    # Layout centralizado com card de vidro
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
-        # Card principal de autenticação
         with st.container():
             
             login_tab, register_tab = st.tabs(["Login", "Registrar-se"])
             
-            # --- Aba de Login ---
             with login_tab:
                 
                 with st.form("login_form"):
@@ -56,6 +47,7 @@ def render():
                                     "password": password
                                 })
                                 user = session.user
+                                # Tenta buscar o perfil do usuário
                                 profile = user_service.get_profile(user.id)
                                 
                                 if profile:
@@ -65,13 +57,14 @@ def render():
                                     st.session_state['username'] = profile['username']
                                     st.session_state['role'] = profile['role']
                                     st.success("Login realizado com sucesso!")
-                                    st.rerun()
+                                    st.rerun() # Redireciona para a página principal
                                 else:
-                                    st.error("Login bem-sucedido, mas não foi possível encontrar seu perfil.")
+                                    # Se o login foi ok mas não achou perfil, ainda é erro
+                                    st.error("Usuário ou senha inválidos.")
                             except Exception as e:
+                                # Captura erros de senha errada ou usuário não existe
                                 st.error(f"Erro no login: Usuário ou senha inválidos.")
 
-            # --- Aba de Registro ---
             with register_tab:
                 
                 with st.form("register_form"):
@@ -100,21 +93,32 @@ def render():
                             st.error("A senha deve ter pelo menos 6 caracteres.")
                         else:
                             try:
-                                # Verifica se o username já existe
-                                existing_user = user_service.get_profile_by_username(username)
+                                # --- CORREÇÃO APLICADA AQUI ---
+                                # Verifica se o username já existe usando a função correta
+                                existing_user = user_service.get_user_by_username(username) 
+                                # -----------------------------
+                                
                                 if existing_user:
                                     st.error("Este nome de usuário já está em uso.")
                                 else:
+                                    # Tenta criar o usuário no Supabase Auth
                                     session = supabase.auth.sign_up({
                                         "email": email,
                                         "password": password,
-                                        "options": {"data": {"username": username}}
+                                        # Passa o username nos metadados para o trigger usar
+                                        "options": {"data": {"username": username}} 
                                     })
                                     st.success("Registro realizado com sucesso! Verifique seu email para confirmar a conta.")
+                                    # Você pode querer limpar o formulário ou redirecionar aqui
                             except Exception as e:
-                                st.error(f"Erro no registro: {e}")
+                                # Tenta dar uma mensagem de erro mais útil
+                                error_message = str(e)
+                                if "User already registered" in error_message:
+                                     st.error("Este e-mail já está em uso.")
+                                elif "check constraint" in error_message or "duplicate key" in error_message:
+                                     st.error("Erro ao salvar perfil. Tente outro nome de usuário.")
+                                else:
+                                     st.error(f"Erro no registro: {error_message}")
             
-            st.markdown('</div>', unsafe_allow_html=True)
         
-    # Renderiza o rodapé
     render_footer()
