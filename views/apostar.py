@@ -1,4 +1,3 @@
-# views/apostar.py
 import streamlit as st
 import datetime
 from core import match_service, bet_service, user_service
@@ -7,7 +6,6 @@ from styles.betting import load_betting_styles, render_match_card, render_confir
 def render():
     load_betting_styles()
     
-    # Header
     st.markdown("""
         <div style="text-align: center; margin-bottom: 2rem;">
             <h1>Wyden 365 - Apostas Esportivas</h1>
@@ -17,34 +15,27 @@ def render():
         </div>
     """, unsafe_allow_html=True)
 
-    # Busca as partidas
     matches = match_service.get_open_matches()
     
     if not matches:
         st.info("Nenhuma partida agendada no momento. Volte mais tarde!")
         st.stop()
         
-    # Inicializa o "carrinho de apostas"
     if 'bet_intent' not in st.session_state:
         st.session_state['bet_intent'] = None
 
-    # Loop para exibir cada partida
     st.subheader("Partidas Disponíveis")
     
     for match in matches:
         team_a_name = match.get('team_a', {}).get('name', 'Time A')
         team_b_name = match.get('team_b', {}).get('name', 'Time B')
         
-        # Renderiza o card da partida
         render_match_card(team_a_name, team_b_name, match['match_datetime'])
 
-        # Layout dos cards clicáveis de aposta
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            # Card clicável para vitória do time A
             if st.session_state.get('bet_intent') and st.session_state['bet_intent'].get('match_id') == match['id'] and st.session_state['bet_intent'].get('prediction') == 'A':
-                # Já está selecionado - mostra como ativo
                 st.markdown(f"""
                     <div class="bet-button-container" style="border-color: hsl(9 100% 59%) !important; background: hsl(9 100% 59% / 0.1) !important;">
                         <div class="feature-icon">
@@ -59,7 +50,6 @@ def render():
                     </div>
                 """, unsafe_allow_html=True)
             else:
-                # Card clicável normal
                 st.markdown(f"""
                     <div class="bet-button-container">
                         <div class="feature-icon">
@@ -86,7 +76,6 @@ def render():
                     st.rerun()
 
         with col2:
-            # Card clicável para empate
             if st.session_state.get('bet_intent') and st.session_state['bet_intent'].get('match_id') == match['id'] and st.session_state['bet_intent'].get('prediction') == 'Empate':
                 st.markdown(f"""
                     <div class="bet-button-container" style="border-color: hsl(9 100% 59%) !important; background: hsl(9 100% 59% / 0.1) !important;">
@@ -169,7 +158,6 @@ def render():
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- FORMULÁRIO DE APOSTA (aparece abaixo da partida selecionada) ---
     if st.session_state['bet_intent'] is not None:
         
         intent = st.session_state['bet_intent']
@@ -192,12 +180,10 @@ def render():
                     st.session_state['bet_intent'] = None
                     st.rerun()
         
-        # Usuário logado - mostra formulário de aposta
         else:
             user_id = st.session_state['user_id']
             balance = user_service.get_user_balance(user_id)
             
-            # Formata o saldo em Real brasileiro
             balance_brl = f"R$ {balance:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
             
             # Mostra informações da aposta selecionada
@@ -215,10 +201,8 @@ def render():
             
             st.markdown(f"*{intent['match_datetime']}*")
             
-            # Card de confirmação
             render_confirmation_box(intent['label'], intent['odds'], balance)
             
-            # Input do valor
             st.subheader("💎 Valor da Aposta")
             
             if 'bet_amount' not in st.session_state:
@@ -236,12 +220,10 @@ def render():
             
             st.session_state['bet_amount'] = amount
             
-            # Calcula e mostra ganho potencial
             if amount > 0:
                 potential_win = amount * intent['odds']
                 profit = potential_win - amount
                 
-                # Formata em Real brasileiro
                 potential_win_brl = f"R$ {potential_win:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                 profit_brl = f"R$ {profit:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                 
@@ -258,7 +240,6 @@ def render():
                     </div>
                 """, unsafe_allow_html=True)
             
-            # Botões de ação
             col1, col2 = st.columns([1, 2])
             
             with col1:
@@ -284,7 +265,6 @@ def render():
                         if success:
                             st.success("🎉 Aposta realizada com sucesso!")
                             st.balloons()
-                            # Atualiza o saldo na sessão
                             st.session_state.user_balance = user_service.get_user_balance(user_id)
                         else:
                             st.error("❌ Erro ao registrar aposta. Tente novamente.")

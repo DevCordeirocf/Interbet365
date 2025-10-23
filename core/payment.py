@@ -1,25 +1,13 @@
-# core/payment.py
-# Lida com TODAS as lógicas de ENTRADA de dinheiro (Depósitos).
-# (PIX Direto e Checkout Pro)
 
 import streamlit as st
 import time
 import uuid 
 import requests
-import mercadopago # SDK v1
-import mercadopago.config
+import mercadopago
 from datetime import datetime, timedelta, timezone
 
-# =============================================================================
-# FUNÇÃO AUXILIAR DE AUTENTICAÇÃO
-# =============================================================================
-
 def get_access_token_and_env():
-    """
-    Verifica o 'environment' e retorna o Access Token correto.
-    Falha com um erro claro se o token do ambiente não for encontrado.
-    """
-    env = st.secrets.get("ENVIRONMENT", "test") # Lê 'ENVIRONMENT'
+    env = st.secrets.get("ENVIRONMENT", "test") 
     access_token = None
     
     if env == "prod":
@@ -29,7 +17,7 @@ def get_access_token_and_env():
             return None, None
         access_token = st.secrets["MP_ACCESS_TOKEN_PROD"]
     
-    else: # env == "test"
+    else: 
         print("Usando credenciais de TESTE.")
         if "MP_ACCESS_TOKEN_TEST" not in st.secrets or not st.secrets["MP_ACCESS_TOKEN_TEST"]:
             st.error("Erro fatal: ENVIRONMENT='test' mas MP_ACCESS_TOKEN_TEST não foi encontrado nos secrets.")
@@ -38,14 +26,8 @@ def get_access_token_and_env():
         
     return access_token, env
 
-# =============================================================================
-# FUNÇÕES DE DEPÓSITO (CHECKOUT PRO)
-# =============================================================================
 
 def get_mp_sdk():
-    """
-    Inicializa o SDK v1.x do Mercado Pago com o Access Token correto.
-    """
     access_token, env = get_access_token_and_env()
     if not access_token:
         return None
@@ -58,10 +40,6 @@ def get_mp_sdk():
         return None
 
 def create_payment_preference(username: str, user_id: int, user_email: str, amount: float) -> dict | None:
-    """
-    Cria uma Preferência de Pagamento (Checkout Pro) usando o SDK v1.x.
-    (Inclui TODOS os campos de Qualidade de Integração)
-    """
     sdk = get_mp_sdk()
     if not sdk:
         return None 
@@ -71,38 +49,34 @@ def create_payment_preference(username: str, user_id: int, user_email: str, amou
     redirect_url = f"{ngrok_base_url}/Carteira"
 
     preference_data = {
-        # --- Ações Obrigatórias (Conciliação) ---
         "notification_url": webhook_url,
         "external_reference": f"user_{user_id}_deposit_pref_{int(time.time())}",
         
-        # --- Itens (Aprovação) ---
         "items": [
             {
-                "id": "SKU-DEPOSITO-WYDEN", # Código do item
+                "id": "SKU-DEPOSITO-WYDEN", 
                 "title": f"Depósito na Carteira Wyden3G5 - {username}",
-                "description": "Créditos para plataforma Wyden3G5", # Descrição
-                "category_id": "games", # Categoria
+                "description": "Créditos para plataforma Wyden3G5", 
+                "category_id": "games", 
                 "quantity": 1,
                 "unit_price": amount,
                 "currency_id": "BRL"
             }
         ],
         
-        # --- Comprador (Aprovação) ---
         "payer": { 
             "name": username,
             "email": user_email
         },
         
-        # --- Experiência de Compra ---
         "back_urls": {
             "success": redirect_url,
             "failure": redirect_url,
             "pending": redirect_url
         },
         "auto_return": "approved",
-        "statement_descriptor": "WYDEN365", # Nome na fatura
-        "binary_mode": True, # Resposta binária
+        "statement_descriptor": "WYDEN365",
+        "binary_mode": True, 
         
         "payment_methods": {
             "excluded_payment_methods": [],
@@ -125,9 +99,6 @@ def create_payment_preference(username: str, user_id: int, user_email: str, amou
 # =============================================================================
 
 def create_pix_payment(username: str, user_id: str, amount: float, email: str, cpf: str) -> dict | None:
-    """
-    Cria um pagamento PIX direto (Checkout API) usando 'requests'.
-    """
     try:
         access_token, env = get_access_token_and_env()
         if not access_token:
@@ -215,9 +186,6 @@ def create_pix_payment(username: str, user_id: str, amount: float, email: str, c
 # =============================================================================
 
 def check_pix_payment_status(payment_id: str) -> dict | None:
-    """
-    Verifica o status de um pagamento PIX pelo ID.
-    """
     access_token, env = get_access_token_and_env()
     if not access_token:
         return None

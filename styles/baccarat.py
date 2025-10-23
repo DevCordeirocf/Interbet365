@@ -1,18 +1,14 @@
-"""
-Estilos para a página do Baccarat - TEMA ESCURO (Layout Cassino com Rotação)
-"""
+
 
 import streamlit as st
 
 def load_baccarat_styles():
-    """
-    Carrega os estilos CSS específicos para a página do Baccarat.
-    """
+
     st.markdown("""
     <style>
         /* --- Áreas do Jogador e Banco --- */
         .player-area h4 {
-             margin-bottom: 10px; 
+             margin-bottom: -250px; 
              font-weight: bold;
              font-size: 1.3rem;
              text-align: center;
@@ -20,7 +16,7 @@ def load_baccarat_styles():
         }
         
         .banker-area h4 {
-             margin-bottom: 10px; 
+             margin-bottom: -250px; 
              font-weight: bold;
              font-size: 1.3rem;
              text-align: center;

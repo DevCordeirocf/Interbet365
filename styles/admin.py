@@ -1,7 +1,7 @@
 import streamlit as st
 
 def load_admin_styles():
-    """Carrega estilos específicos para a página de administração com design moderno"""
+
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');

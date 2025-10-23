@@ -6,7 +6,6 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Carrega as variáveis de ambiente do arquivo .env (MP_ACCESS_TOKEN, SUPABASE_URL, etc.)
 load_dotenv()
 
 # ==============================================================================
@@ -14,12 +13,8 @@ load_dotenv()
 # ==============================================================================
 
 def init_supabase_client() -> Client | None:
-    """Inicializa e retorna o cliente Supabase usando credenciais do .env."""
     try:
         url = os.getenv("SUPABASE_URL")
-        # Usamos a SERVICE_KEY aqui porque o webhook precisa de permissões de admin
-        # para ignorar o RLS e atualizar o saldo de qualquer usuário.
-        key = os.getenv("SUPABASE_SERVICE_KEY")
 
         if not url or not key:
             print("ERRO DO WEBHOOK: Credenciais do Supabase não encontradas no arquivo .env")
@@ -30,34 +25,25 @@ def init_supabase_client() -> Client | None:
         return None
 
 def update_database_on_payment(supabase: Client, external_reference: str, amount: float) -> bool:
-    """
-    Atualiza o saldo do usuário no banco de dados após um pagamento aprovado.
-    """
     print(f"WEBHOOK: Atualizando saldo para a referência: {external_reference}...")
     try:
-        # Extrai o user_id da referência. O formato é "user_UUID_deposit_TIMESTAMP"
         parts = external_reference.split('_')
         if len(parts) < 2 or parts[0] != 'user':
             print(f"ERRO DO WEBHOOK: A referência externa '{external_reference}' tem um formato inválido.")
             return False
         user_id = parts[1]
 
-        # 1. Pega o saldo atual do usuário
         profile_res = supabase.table('profiles').select('balance').eq('id', user_id).single().execute()
         
         if not profile_res.data:
             print(f"ERRO DO WEBHOOK: Perfil para o usuário {user_id} não foi encontrado.")
             return False
 
-        # 2. Calcula o novo saldo
         current_balance = profile_res.data['balance']
         new_balance = float(current_balance) + float(amount)
 
-        # 3. Atualiza o saldo na tabela profiles
         update_res = supabase.table('profiles').update({'balance': new_balance}).eq('id', user_id).execute()
 
-        # Opcional: Registra a transação como 'Concluída'
-        # supabase.table('Transactions').update({'status': 'Concluído'}).eq('external_id', payment_id).execute()
 
         print(f"WEBHOOK: Saldo do usuário {user_id} atualizado para {new_balance} com sucesso!")
         return True
@@ -101,8 +87,6 @@ def mercadopago_webhook():
                 amount = payment.get("transaction_amount")
                 
                 if external_ref and amount:
-                    # ** AQUI ESTÁ A MUDANÇA PRINCIPAL **
-                    # Chamamos a função real que atualiza o banco de dados
                     update_database_on_payment(supabase_client, external_ref, amount)
                     
         except Exception as e:

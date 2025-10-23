@@ -1,7 +1,4 @@
-"""
-styles/betting.py
-Estilos para as páginas de apostas - TEMA ESCURO
-"""
+
 
 import streamlit as st
 
@@ -9,9 +6,7 @@ COLOR_PRIMARY = "#FF462C"
 COLOR_SECONDARY = "#88005B"
 
 def load_betting_styles():
-    """
-    Carrega os estilos CSS para as páginas de apostas - TEMA ESCURO
-    """
+
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');

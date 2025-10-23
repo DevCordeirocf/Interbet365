@@ -1,11 +1,8 @@
-# styles/sidebar.py
 
 import streamlit as st
 
 def load_sidebar_styles():
-    """
-    Carrega os estilos CSS para a sidebar
-    """
+
     st.markdown("""
     <style>
     /* ==============================

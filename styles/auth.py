@@ -2,10 +2,7 @@ import streamlit as st
 from .config import COLOR_PRIMARY, COLOR_SECONDARY
 
 def load_auth_styles():
-    """
-    Carrega os estilos CSS para as páginas de autenticação (Login/Registro)
-    mantendo a proporção do estilo anterior com espaço para background
-    """
+
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');

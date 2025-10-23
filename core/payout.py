@@ -1,5 +1,3 @@
-# core/payout.py
-# Lida com TODAS as lógicas de SAÍDA de dinheiro (Saques / Payouts).
 
 import streamlit as st
 import time
@@ -11,11 +9,7 @@ import requests
 # =============================================================================
 
 def get_access_token_and_env():
-    """
-    Verifica o 'environment' e retorna o Access Token correto.
-    Falha com um erro claro se o token do ambiente não for encontrado.
-    """
-    env = st.secrets.get("ENVIRONMENT", "test") # Lê 'ENVIRONMENT'
+    env = st.secrets.get("ENVIRONMENT", "test") 
     access_token = None
     
     if env == "prod":
@@ -25,7 +19,7 @@ def get_access_token_and_env():
             return None, None
         access_token = st.secrets["MP_ACCESS_TOKEN_PROD"]
     
-    else: # env == "test"
+    else: 
         print("Usando credenciais de TESTE.")
         if "MP_ACCESS_TOKEN_TEST" not in st.secrets or not st.secrets["MP_ACCESS_TOKEN_TEST"]:
             st.error("Erro fatal: ENVIRONMENT='test' mas MP_ACCESS_TOKEN_TEST não foi encontrado nos secrets.")
@@ -39,31 +33,21 @@ def get_access_token_and_env():
 # =============================================================================
 
 def process_withdrawal(user_id: str, amount: float, pix_key: str, pix_key_type: str, description: str) -> dict:
-    """
-    Processa um saque via PIX (Payout) usando a API DE PAYOUTS correta.
-    """
     
     try:
         access_token, env = get_access_token_and_env()
         if not access_token:
             return {"success": False, "message": "Erro de configuração do servidor."}
             
-        # O Payout não precisa do e-mail do vendedor, ele usa o Access Token
-        # (Mas mantemos a verificação do e-mail para outras funções, se necessário)
         if "MP_SELLER_EMAIL" not in st.secrets: 
              st.error("Erro fatal: MP_SELLER_EMAIL não foi encontrado nos secrets.")
              return {"success": False, "message": "Erro de configuração do servidor."}
-        # seller_email = st.secrets["MP_SELLER_EMAIL"] # Não é usado no Payout
 
     except Exception as e:
         print(f"ERRO CRÍTICO: Falha ao ler credenciais dos secrets: {e}")
         return {"success": False, "message": "Erro de configuração do servidor."}
 
     idempotency_key = str(uuid.uuid4())
-    
-    # --- ESTE É O PAYLOAD CORRETO PARA A API DE PAYOUTS ---
-    # Nota: A API infere o tipo da chave (CPF, EMAIL, etc) automaticamente
-    # Nota 2: pix_key_type não é usado pela API v1/payouts, mas mantemos
     payout_data = {
         "amount": float(amount),
         "receiver_id": pix_key,
@@ -72,9 +56,7 @@ def process_withdrawal(user_id: str, amount: float, pix_key: str, pix_key_type: 
         "description": description,
         "external_reference": f"payout_user_{user_id}_{int(time.time())}"
     }
-    # --------------------------------------------------------
     
-    # --- ESTA É A URL CORRETA PARA A API DE PAYOUTS ---
     url = "https://api.mercadopago.com/v1/payouts"
     
     headers = {

@@ -1,16 +1,11 @@
-# views/carteira.py - VERSÃO COMPLETA COM 3 ABAS
-# (PIX Direto, Checkout Pro, Saque)
-# ATUALIZADO PARA USAR core/payment.py e core/payout.py
+
 
 import streamlit as st
 import locale
 import time
-# --- IMPORTAÇÕES ATUALIZADAS ---
 from core import user_service, payment, payout
-# -------------------------------
 from styles.wallet import load_wallet_styles
 
-# Tenta configurar locale pt_BR
 try:
     locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 except Exception:
@@ -21,12 +16,10 @@ except Exception:
 # =============================================================================
 
 def render_header():
-    """Renderiza o header da página"""
     st.title("Minha Carteira")
     st.markdown('<p class="stSubheader">Gerencie seus depósitos e saques</p>', unsafe_allow_html=True)
 
 def render_balance_card(balance):
-    """Renderiza o card de saldo com design destacado"""
     try:
         formatted_balance = locale.currency(balance, grouping=True, symbol='R$')
     except Exception:
@@ -40,7 +33,6 @@ def render_balance_card(balance):
     """, unsafe_allow_html=True)
 
 def render_feature_cards_deposit():
-    """Renderiza os cards de features para depósito Checkout Pro"""
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
@@ -65,7 +57,6 @@ def render_feature_cards_deposit():
         """, unsafe_allow_html=True)
 
 def render_feature_cards_withdraw():
-    """Renderiza os cards de features para saque"""
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
@@ -94,7 +85,6 @@ def render_feature_cards_withdraw():
 # =============================================================================
 
 def render_pix_deposit_tab(username, user_id, user_email):
-    """Renderiza a aba de depósito via PIX direto (sem Checkout Pro)"""
     
     st.markdown("""
         <div class="section-header">
@@ -137,11 +127,9 @@ def render_pix_deposit_tab(username, user_id, user_email):
     
     st.divider()
     
-    # Verifica se já existe um PIX gerado na sessão
     if 'current_pix_payment' in st.session_state:
         display_pix_payment(st.session_state['current_pix_payment'])
     else:
-        # Formulário para gerar PIX
         with st.form("pix_deposit_form"):
             st.markdown("### Quanto deseja depositar?")
             
@@ -180,7 +168,6 @@ def render_pix_deposit_tab(username, user_id, user_email):
                     st.error("O valor mínimo para depósito é R$ 5,00")
                 else:
                     with st.spinner("Gerando código PIX..."):
-                        # --- CHAMADA ATUALIZADA ---
                         pix_result = payment.create_pix_payment(
                             username=username,
                             user_id=user_id,
@@ -197,7 +184,6 @@ def render_pix_deposit_tab(username, user_id, user_email):
 
 
 def display_pix_payment(pix_data: dict):
-    """Exibe o QR Code e informações do PIX gerado"""
     
     payment_id = pix_data.get('payment_id')
     qr_code = pix_data.get('qr_code')
@@ -225,7 +211,7 @@ def display_pix_payment(pix_data: dict):
             st.image(
                 f"data:image/png;base64,{qr_code_base64}",
                 caption="Use o app do seu banco",
-                width=250 # Tamanho fixo
+                width=250
             )
         else:
             st.warning("QR Code não disponível")
@@ -244,13 +230,11 @@ def display_pix_payment(pix_data: dict):
     
     if st.button("Verificar Pagamento", use_container_width=True, type="primary"):
         with st.spinner("Verificando pagamento..."):
-            # --- CHAMADA ATUALIZADA ---
             status_info = payment.check_pix_payment_status(payment_id)
             
             if status_info:
                 if status_info['status'] == 'approved':
                     st.success("Pagamento aprovado! Atualizando saldo...")
-                    # Limpar sessão
                     del st.session_state['current_pix_payment']
                     time.sleep(2)
                     st.balloons()
@@ -276,7 +260,6 @@ def display_pix_payment(pix_data: dict):
 # =============================================================================
 
 def render_deposit_checkout_tab(username, user_id, user_email):
-    """Renderiza a aba de depósito (Checkout Pro) com design moderno"""    
     st.markdown("""
         <div class="section-header">
             <div class="section-icon">
@@ -305,7 +288,6 @@ def render_deposit_checkout_tab(username, user_id, user_email):
 
         if submitted:
             with st.spinner("Gerando link de pagamento seguro..."):
-                # --- CHAMADA ATUALIZADA ---
                 preference = payment.create_payment_preference(
                     username=username,
                     user_id=user_id,
@@ -332,7 +314,6 @@ def render_deposit_checkout_tab(username, user_id, user_email):
 # =============================================================================
 
 def render_withdraw_tab(user_id, balance):
-    """Renderiza a aba de saque com design moderno"""
     
     st.markdown("""
         <div class="section-header">
@@ -369,7 +350,6 @@ def render_withdraw_tab(user_id, balance):
             "Tipo de chave Pix",
             options=pix_key_type_display.keys()
         )
-        # Nota: A API de Payout v1 não usa o tipo, mas guardamos para o futuro
         pix_key_type = pix_key_type_display[pix_key_type_label]
         
         pix_key = st.text_input(
@@ -389,7 +369,6 @@ def render_withdraw_tab(user_id, balance):
                 with st.spinner("Processando sua solicitação de saque..."):
                     description_for_mp = f"Saque Wyden365 - Usuário {user_id}"
                     
-                    # --- CHAMADA ATUALIZADA (E AGORA COMPLETA) ---
                     response = payout.process_withdrawal(
                         user_id=str(user_id),
                         amount=amount_to_withdraw, 
@@ -399,7 +378,6 @@ def render_withdraw_tab(user_id, balance):
                     )
                 
                 if response["success"]:
-                    # Debita o valor do saldo
                     user_service.update_user_balance(user_id, -amount_to_withdraw)
                     st.success(f"✓ {response['message']}")
                     st.balloons()
@@ -412,7 +390,6 @@ def render_withdraw_tab(user_id, balance):
 # =============================================================================
 
 def render():
-    """Função principal de renderização da página de carteira"""
     
     load_wallet_styles()
     
@@ -424,7 +401,7 @@ def render():
     
     user_id = st.session_state['user_id']
     username = st.session_state['username']
-    user_email = st.session_state.get('email', '') # Pega o email da sessão
+    user_email = st.session_state.get('email', '') 
     
     balance = user_service.get_user_balance(user_id)
     
@@ -434,7 +411,6 @@ def render():
         st.error("✕ Não foi possível carregar seu saldo.")
         balance = 0.0
     
-    # --- ESTRUTURA DE ABAS ATUALIZADA ---
     tab_pix, tab_checkout, tab_withdraw = st.tabs([
         "PIX Instantâneo", 
         "Checkout Pro", 
