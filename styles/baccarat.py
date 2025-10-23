@@ -10,12 +10,24 @@ def load_baccarat_styles():
     """
     st.markdown("""
     <style>
-        /* --- Áreas do Jogador e Banco --- */
-        .player-area h4, .banker-area h4 {
-             margin-bottom: 10px; /* Espaço abaixo do título */
+        /* --- Áreas do Jogador e Banco (REVERTIDO) --- */
+        /* Removemos o fundo, borda e altura para "aproximar" os elementos. */
+        /* Agora, apenas os títulos (h4) dentro dessas classes são afetados. */
+        
+        .player-area h4 {
+             margin-bottom: 10px; 
              font-weight: bold;
              font-size: 1.3rem;
              text-align: center;
+             color: #3498db; /* Azul Jogador */
+        }
+        
+        .banker-area h4 {
+             margin-bottom: 10px; 
+             font-weight: bold;
+             font-size: 1.3rem;
+             text-align: center;
+             color: #e74c3c; /* Vermelho Banco */
         }
 
         /* --- Container para UMA carta (st.image já cuida do tamanho) --- */
@@ -42,15 +54,13 @@ def load_baccarat_styles():
          /* --- Classe para rotacionar a TERCEIRA CARTA (container ou imagem) --- */
         .third-card-rotated {
             transform: rotate(90deg);
-            /* Ajuste fino da posição se necessário após rotação */
-            /* margin-top: 20px; */
         }
 
 
         /* --- Valores de Baccarat --- */
         .baccarat-values {
             text-align: center;
-            margin-top: 10px;
+            margin-top: 10px; /* (REVERTIDO) Removemos o 'margin-top: auto' */
             padding: 5px 0;
         }
         .value-label {

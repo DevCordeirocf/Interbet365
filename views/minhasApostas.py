@@ -54,7 +54,6 @@ def render():
         st.stop()
     
     # --- CABEÇALHO CORRIGIDO ---
-    # O HTML estava fora do markdown e havia títulos duplicados
     st.markdown("""
         <div class="icon-header">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="hsl(11, 100%, 60%)" stroke-width="2">
@@ -129,10 +128,6 @@ def render():
 
                 potential = amount * (float(odd) if odd is not None else 1.0)
                 
-                # --- BLOCO DUPLICADO REMOVIDO DAQUI ---
-                # O código anterior tinha um bloco duplicado que
-                # sobrescrevia a odd correta com uma errada.
-
                 # Monta o header do expander
                 header = f"Aposta de {format_brl(amount)} • {team_a} vs {team_b}"
                 
@@ -143,10 +138,6 @@ def render():
                     st.markdown(f"**Odd:** {format_odd(odd)}")
                     st.markdown(f"**Retorno Potencial:** {format_brl(potential)}")
                     st.markdown(f"**Status:** {bet.get('status', '-')}")
-                
-                # --- BLOCO DUPLICADO E MAL FORMATADO REMOVIDO DAQUI ---
-                # Havia outro bloco de `st.markdown` duplicado
-                # e fora do `with st.expander`
 
     with tab_finished:
         st.subheader("Histórico de Apostas")
@@ -192,27 +183,32 @@ def render():
                 else:
                     odd = extract_odd(bet)
 
+                # --- CÁLCULO CORRETO ---
                 potential = amount * (float(odd) if odd is not None else 1.0)
-                
-                # --- BLOCO DUPLICADO REMOVIDO DAQUI ---
-                # O código anterior sobrescrevia a odd correta
-                # com `odd = extract_odd(bet)`
                 
                 status = bet.get('status', '-')
                 result = bet.get('result', '')
                 
+                # --- CORREÇÃO DO BUG (PALAVRA CORRETA) ---
+                # Padroniza o status para minúsculo antes de verificar
+                status_normalized = status.lower()
+                
                 # Define cor do status
-                status_color = "#10b981" if status == "Ganhou" else "#ef4444" if status == "Perdeu" else "#f59e0b"
+                # Verifica "ganha" (de "GANHA") ou "ganhou"
+                is_winner = (status_normalized == "ganha" or status_normalized == "ganhou")
+                is_loser = (status_normalized == "perdeu")
+                
+                status_color = "#10b981" if is_winner else "#ef4444" if is_loser else "#f59e0b"
 
                 # Define o valor do retorno com base no status
                 payout_display = 0.0
-                if status == "Ganhou":
-                    payout_display = potential
-                elif status == "Perdeu":
+                if is_winner:
+                    payout_display = potential # <- Agora usa o 'potential' correto
+                elif is_loser:
                     payout_display = 0.0 # Perdeu
                 else: # Empate/Cancelado
                     payout_display = amount # Devolve a aposta
-
+                
                 # Renderiza card customizado
                 html = f"""
                 <div style="display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;margin-bottom:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);transition:all 0.3s ease;">

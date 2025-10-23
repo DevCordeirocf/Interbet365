@@ -20,8 +20,10 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
         
         col_player, col_banker = st.columns(2) # Divide a mesa
 
+        # --- COLUNA DO JOGADOR (REVERTIDA) ---
         with col_player:
-            st.markdown('<div class="player-area"><h4>Jogador</h4></div>', unsafe_allow_html=True)
+            # (REVERTIDO) Apenas o título com a classe para cor
+            st.markdown('<div class="player-area"><h4>Jogador</h4></div>', unsafe_allow_html=True) 
             
             # Usa colunas para posicionar os 3 slots
             slot_cols = st.columns(3) 
@@ -31,7 +33,6 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                     is_third = (i == 2) # É a terceira carta?
                     
                     with st.container(): # Container para aplicar rotação se necessário
-                        # Aplica a classe de rotação SE for a terceira carta
                         rotation_class = "third-card-rotated" if is_third else ""
                         st.markdown(f'<div class="card-container {rotation_class}">', unsafe_allow_html=True)
                         
@@ -43,15 +44,18 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                                 st.warning(f"⚠️{card_name}.png")
                                 print(f"AVISO: Imagem não encontrada '{image_path}'")
                         else:
-                             # Slot vazio (usa CSS)
                              st.markdown('<div class="card-slot-empty"></div>', unsafe_allow_html=True)
                         
                         st.markdown('</div>', unsafe_allow_html=True) # Fecha o div do container da carta
 
-            # Valor do Jogador
+            # Valor do Jogador (agora fora do wrapper)
             st.markdown(f'<div class="baccarat-values player-value"><span class="value-label">{player_value}</span></div>', unsafe_allow_html=True)
+            
+            # (REVERTIDO) Removemos o </div> de fechamento da área
 
+        # --- COLUNA DO BANCO (REVERTIDA) ---
         with col_banker:
+            # (REVERTIDO) Apenas o título com a classe para cor
             st.markdown('<div class="banker-area"><h4>Banco</h4></div>', unsafe_allow_html=True)
             
             slot_cols = st.columns(3)
@@ -73,7 +77,6 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                              st.markdown('<div class="card-slot-empty"></div>', unsafe_allow_html=True)
                         st.markdown('</div>', unsafe_allow_html=True)
 
-            # Valor do Banco
             st.markdown(f'<div class="baccarat-values banker-value"><span class="value-label">{banker_value}</span></div>', unsafe_allow_html=True)
 
 
