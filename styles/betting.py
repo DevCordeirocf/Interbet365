@@ -98,6 +98,26 @@ def load_betting_styles():
         margin: 1.5rem 0 !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }}
+    
+    .match-modality {{
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+        margin-bottom: 1rem !important;
+        color: hsl(var(--primary)) !important;
+        font-weight: 600 !important;
+    }}
+    
+    .modality-icon {{
+        font-size: 1.25rem !important;
+    }}
+    
+    .modality-name {{
+        font-size: 0.9rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }}
 
     .match-card:hover {{
         border-color: hsl(var(--primary)) !important;
@@ -431,20 +451,36 @@ def load_betting_styles():
     """, unsafe_allow_html=True)
 
 
-def render_match_card(team_a_name, team_b_name, match_datetime):
+def get_modality_icon(modality_name):
+    """Retorna o ícone apropriado para cada modalidade."""
+    icons = {
+        'Futsal': '⚽',
+        'Basquete': '🏀',
+        'Vôlei': '🏐',
+        'Handball': '🤾',
+    }
+    return icons.get(modality_name, '🎮')  # retorna 🎮 se a modalidade não estiver mapeada
+
+def render_match_card(team_a_name, team_b_name, match_datetime, modality=None, formatted_dt=None):
     """
-    Renderiza um card de partida no estilo React
+    Renderiza um card de partida no estilo React com modalidade e data formatada
     """
+    modality_icon = get_modality_icon(modality)
+    
     st.markdown(f"""
         <div class="match-card">
             <div class="match-header">
+                <div class="match-modality">
+                    <span class="modality-icon">{modality_icon}</span>
+                    <span class="modality-name">{modality or "Esporte"}</span>
+                </div>
                 <div class="match-teams">
                     <span class="team-name">{team_a_name}</span>
                     <span class="match-vs">VS</span>
                     <span class="team-name">{team_b_name}</span>
                 </div>
                 <div class="match-meta">
-                     {match_datetime}
+                    {formatted_dt or match_datetime}
                 </div>
             </div>
         </div>

@@ -3,6 +3,44 @@ import datetime
 from core import match_service, bet_service, user_service
 from styles.betting import load_betting_styles, render_match_card, render_confirmation_box
 
+
+def format_match_datetime(dt):
+    """Format a match datetime value for display.
+
+    Accepts datetime.datetime, ISO strings, or unix timestamps.
+    Returns a localized pt-BR style string like '23/10/2025 às 19:30'.
+    """
+    if isinstance(dt, datetime.datetime):
+        dt_obj = dt
+    elif isinstance(dt, (int, float)):
+        try:
+            dt_obj = datetime.datetime.fromtimestamp(dt)
+        except Exception:
+            return str(dt)
+    elif isinstance(dt, str):
+        # Tenta parses ISO e formatos comuns
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"):
+            try:
+                dt_obj = datetime.datetime.strptime(dt, fmt)
+                break
+            except Exception:
+                dt_obj = None
+        if dt_obj is None:
+            try:
+                # fallback para fromisoformat (Python 3.7+)
+                dt_obj = datetime.datetime.fromisoformat(dt)
+            except Exception:
+                return dt
+    else:
+        return str(dt)
+
+    # Formata em pt-BR: dd/mm/YYYY às HH:MM
+    try:
+        return dt_obj.strftime("%d/%m/%Y às %H:%M")
+    except Exception:
+        return str(dt)
+
+
 def render():
     load_betting_styles()
     
@@ -27,10 +65,25 @@ def render():
     st.subheader("Partidas Disponíveis")
     
     for match in matches:
-        team_a_name = match.get('team_a', {}).get('name', 'Time A')
-        team_b_name = match.get('team_b', {}).get('name', 'Time B')
+        team_a = match.get('team_a', {})
+        team_b = match.get('team_b', {})
+        team_a_name = team_a.get('name', 'Time A')
+        team_b_name = team_b.get('name', 'Time B')
         
-        render_match_card(team_a_name, team_b_name, match['match_datetime'])
+        # Pega a modalidade do time A (ambos times devem ter a mesma modalidade)
+        modality = team_a.get('modalities', {}).get('name') if team_a else None
+        
+        # Formata a data/hora da partida para exibição
+        formatted_dt = format_match_datetime(match.get('match_datetime'))
+        
+        # Renderiza o card com todos os detalhes
+        render_match_card(
+            team_a_name=team_a_name,
+            team_b_name=team_b_name,
+            match_datetime=match['match_datetime'],
+            modality=modality,
+            formatted_dt=formatted_dt
+        )
 
         col1, col2, col3 = st.columns(3)
         
@@ -62,7 +115,8 @@ def render():
                         <div class="odds-display">{match['odds_a']:.2f}</div>
                     </div>
                 """, unsafe_allow_html=True)
-                if st.button("", key=f"bet_a_{match['id']}", use_container_width=True,
+                # Botão claro e clicável abaixo do card para apostar na Casa
+                if st.button(f"Apostar na Casa — {match['odds_a']:.2f}", key=f"bet_a_{match['id']}", use_container_width=True,
                            help=f"Apostar na vitória de {team_a_name}"):
                     st.session_state['bet_intent'] = {
                         'match_id': match['id'],
@@ -103,7 +157,7 @@ def render():
                         <div class="odds-display">{match['odds_draw']:.2f}</div>
                     </div>
                 """, unsafe_allow_html=True)
-                if st.button("", key=f"bet_draw_{match['id']}", use_container_width=True,
+                if st.button(f"Apostar Empate — {match['odds_draw']:.2f}", key=f"bet_draw_{match['id']}", use_container_width=True,
                            help="Apostar no empate"):
                     st.session_state['bet_intent'] = {
                         'match_id': match['id'],
@@ -143,7 +197,7 @@ def render():
                         <div class="odds-display">{match['odds_b']:.2f}</div>
                     </div>
                 """, unsafe_allow_html=True)
-                if st.button("", key=f"bet_b_{match['id']}", use_container_width=True,
+                if st.button(f"Apostar na Fora — {match['odds_b']:.2f}", key=f"bet_b_{match['id']}", use_container_width=True,
                            help=f"Apostar na vitória de {team_b_name}"):
                     st.session_state['bet_intent'] = {
                         'match_id': match['id'],
@@ -188,7 +242,7 @@ def render():
             
             # Mostra informações da aposta selecionada
             st.markdown("---")
-            st.subheader("💰 Confirmar Aposta")
+            st.subheader("Confirmar Aposta")
             
             # Informações da partida
             col1, col2, col3 = st.columns([2,1,2])
@@ -199,11 +253,11 @@ def render():
             with col3:
                 st.markdown(f"**{intent['team_b']}**")
             
-            st.markdown(f"*{intent['match_datetime']}*")
+            st.markdown(f"*{format_match_datetime(intent['match_datetime'])}*")
             
             render_confirmation_box(intent['label'], intent['odds'], balance)
             
-            st.subheader("💎 Valor da Aposta")
+            st.subheader("Valor da Aposta")
             
             if 'bet_amount' not in st.session_state:
                 st.session_state['bet_amount'] = 10.0
@@ -230,11 +284,11 @@ def render():
                 st.markdown(f"""
                     <div class="potential-win-box">
                         <div class="potential-row">
-                            <span class="potential-label">💰 Retorno Potencial:</span>
+                            <span class="potential-label">Retorno Potencial:</span>
                             <span class="potential-value win">{potential_win_brl}</span>
                         </div>
                         <div class="potential-row">
-                            <span class="potential-label">💎 Lucro Líquido:</span>
+                            <span class="potential-label">Lucro Líquido:</span>
                             <span class="potential-value profit">{profit_brl}</span>
                         </div>
                     </div>
@@ -243,17 +297,17 @@ def render():
             col1, col2 = st.columns([1, 2])
             
             with col1:
-                if st.button("❌ Cancelar", use_container_width=True, key="cancel_bet"):
+                if st.button("Cancelar", use_container_width=True, key="cancel_bet"):
                     st.session_state['bet_intent'] = None
                     st.session_state['bet_amount'] = 10.0
                     st.rerun()
             
             with col2:
-                if st.button("✅ Confirmar Aposta", type="primary", use_container_width=True, key="confirm_bet"):
+                if st.button("Confirmar Aposta", type="primary", use_container_width=True, key="confirm_bet"):
                     if amount > balance:
-                        st.error("💸 Saldo insuficiente para esta aposta.")
+                        st.error("Saldo insuficiente para esta aposta.")
                     elif amount <= 0:
-                        st.error("❌ O valor deve ser maior que zero.")
+                        st.error("O valor deve ser maior que zero.")
                     else:
                         success = bet_service.create_bet(
                             user_id=user_id,
@@ -263,11 +317,11 @@ def render():
                         )
                         
                         if success:
-                            st.success("🎉 Aposta realizada com sucesso!")
+                            st.success("Aposta realizada com sucesso!")
                             st.balloons()
                             st.session_state.user_balance = user_service.get_user_balance(user_id)
                         else:
-                            st.error("❌ Erro ao registrar aposta. Tente novamente.")
+                            st.error("Erro ao registrar aposta. Tente novamente.")
                         
                         st.session_state['bet_intent'] = None
                         st.session_state['bet_amount'] = 10.0

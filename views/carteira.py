@@ -88,40 +88,50 @@ def render_pix_deposit_tab(username, user_id, user_email):
     
     st.markdown("""
         <div class="section-header">
-            <div class="section-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(11, 100%, 60%)" stroke-width="2">
-                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                    <line x1="2" y1="10" x2="22" y2="10"></line>
-                </svg>
-            </div>
             <h2 style="margin: 0;">Depósito via PIX</h2>
         </div>
     """, unsafe_allow_html=True)
     
     # Feature cards
     col1, col2, col3 = st.columns(3)
+    
     with col1:
         st.markdown("""
             <div class="feature-card">
-                <div class="feature-icon">⚡</div>
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                </div>
                 <div class="feature-title">Instantâneo</div>
-                <div class="feature-desc">Crédito em segundos</div>
+                <div class="feature-desc">Crédito imediato</div>
             </div>
         """, unsafe_allow_html=True)
+    
     with col2:
         st.markdown("""
             <div class="feature-card">
-                <div class="feature-icon">🔒</div>
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
                 <div class="feature-title">Seguro</div>
-                <div class="feature-desc">100% protegido</div>
+                <div class="feature-desc">Pagamento via Mercado Pago</div>
             </div>
         """, unsafe_allow_html=True)
+    
     with col3:
         st.markdown("""
             <div class="feature-card">
-                <div class="feature-icon">📱</div>
-                <div class="feature-title">Simples</div>
-                <div class="feature-desc">Pague pelo celular</div>
+                <div class="feature-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                </div>
+                <div class="feature-title">Flexível</div>
+                <div class="feature-desc">Funcional a qualquer momento</div>
             </div>
         """, unsafe_allow_html=True)
     

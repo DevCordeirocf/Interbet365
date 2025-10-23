@@ -43,11 +43,6 @@ def render():
         st.stop()
     
     st.markdown("""
-        <div class="icon-header">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="hsl(11, 100%, 60%)" stroke-width="2">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-            </svg>
-        </div>
     """, unsafe_allow_html=True)
     st.title("Minhas Apostas")
     

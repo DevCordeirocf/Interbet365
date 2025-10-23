@@ -36,7 +36,7 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                             if os.path.exists(image_path):
                                 st.image(image_path, width=100) 
                             else:
-                                st.warning(f"⚠️{card_name}.png")
+                                st.warning(f"{card_name}.png")
                                 print(f"AVISO: Imagem não encontrada '{image_path}'")
                         else:
                              st.markdown('<div class="card-slot-empty"></div>', unsafe_allow_html=True)
@@ -63,7 +63,7 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
                             if os.path.exists(image_path):
                                 st.image(image_path, width=100)
                             else:
-                                st.warning(f"⚠️{card_name}.png")
+                                st.warning(f"{card_name}.png")
                         else:
                              st.markdown('<div class="card-slot-empty"></div>', unsafe_allow_html=True)
                         st.markdown('</div>', unsafe_allow_html=True)
@@ -107,14 +107,58 @@ def render():
     load_baccarat_styles() 
     
     if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
-        st.error("🔒 Acesso negado. Por favor, faça o login para jogar."); st.stop()
+        st.error("Acesso negado. Por favor, faça o login para jogar."); st.stop()
     st_autorefresh(interval=1000, key="game_refresher")
     if 'baccarat_state' not in st.session_state:
         st.session_state.baccarat_state = {"phase": "BETTING", "timer": 15, "history": [], "last_hand": None}
     state = st.session_state.baccarat_state
     user_id = st.session_state['user_id']
 
-    st.title("🎲 Baccarat ao Vivo")
+    # Título com ícone de ajuda
+    if 'show_baccarat_help' not in st.session_state:
+        st.session_state['show_baccarat_help'] = False
+
+    col_title, col_help = st.columns([9, 1])
+    with col_title:
+        st.title("Baccarat ao Vivo")
+    with col_help:
+        # Botão com ícone de ajuda; ao clicar alterna a exibição do cartão de ajuda
+        if st.button("?", key="baccarat_help_btn", help="Ajuda sobre como funcionam as apostas no Baccarat ao vivo"):
+            st.session_state['show_baccarat_help'] = not st.session_state['show_baccarat_help']
+
+    # Cartão de ajuda — exibido quando o usuário ativa o botão
+    if st.session_state.get('show_baccarat_help'):
+        with st.container():
+            st.info(
+                """
+                Como funcionam as apostas no Baccarat ao vivo:
+
+                • Fases do jogo:
+                  1) BETTING — período para registrar apostas (ex.: 15s).
+                  2) DEALING — cartas são reveladas e regras da terceira carta aplicadas.
+                  3) RESULT — mostra o vencedor e pagamentos; depois volta para BETTING.
+
+                • Tipos de aposta e pagamentos:
+                  - Jogador (Player): paga 1:1.
+                  - Banco (Banker): paga 0.95:1 (comissão simulada aplicada).
+                  - Empate (Tie): paga 8:1.
+
+                • Regras importantes:
+                  - As mãos começam com duas cartas cada.
+                  - A pontuação é o total das cartas mod 10 (por exemplo, 7+8 = 5).
+                  - Regras da terceira carta são aplicadas automaticamente durante DEALING.
+
+                • Como apostar aqui:
+                  - Insira o valor no campo "Valor da Aposta".
+                  - Clique no botão do lado correspondente (Jogador / Banco / Empate).
+                  - Se o saldo for insuficiente, a aposta será recusada.
+
+                • Exemplo rápido:
+                  Apostando R$5 no Jogador e vencendo, você recebe R$5 de lucro (total R$10).
+
+                Se precisar de mais detalhes sobre regras de terceira carta ou odds, abra a documentação do jogo ou contate o suporte.
+                """
+            )
     balance = user_service.get_user_balance(user_id)
     balance_placeholder = st.empty()
     if balance is not None: balance_placeholder.metric(label="Meu Saldo", value=f"R$ {balance:.2f}")

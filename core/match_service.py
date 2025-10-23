@@ -59,7 +59,8 @@ def get_open_matches():
     try:
         response = supabase.table('matches').select(
             'id, match_datetime, status, odds_a, odds_b, odds_draw, '
-            'team_a:team_a_id(name), team_b:team_b_id(name)'
+            'team_a:team_a_id(name, modalities(name)), '
+            'team_b:team_b_id(name, modalities(name))'
         ).eq('status', 'Agendado').order('match_datetime', desc=False).execute()
         return response.data
     except Exception as e:
