@@ -1,4 +1,6 @@
-# core/payment_service.py - VERSÃO FINAL PRODUÇÃO
+# core/payment.py
+# Lida com TODAS as lógicas de ENTRADA de dinheiro (Depósitos).
+# (PIX Direto e Checkout Pro)
 
 import streamlit as st
 import time
@@ -7,6 +9,10 @@ import requests
 import mercadopago # SDK v1
 import mercadopago.config
 from datetime import datetime, timedelta, timezone
+
+# =============================================================================
+# FUNÇÃO AUXILIAR DE AUTENTICAÇÃO
+# =============================================================================
 
 def get_access_token_and_env():
     """
@@ -31,6 +37,10 @@ def get_access_token_and_env():
         access_token = st.secrets["MP_ACCESS_TOKEN_TEST"]
         
     return access_token, env
+
+# =============================================================================
+# FUNÇÕES DE DEPÓSITO (CHECKOUT PRO)
+# =============================================================================
 
 def get_mp_sdk():
     """
@@ -111,8 +121,9 @@ def create_payment_preference(username: str, user_id: int, user_email: str, amou
         return None
 
 # =============================================================================
-# FUNÇÃO DE CRIAR PIX DIRETO (Checkout API)
+# FUNÇÕES DE DEPÓSITO (PIX DIRETO / CHECKOUT API)
 # =============================================================================
+
 def create_pix_payment(username: str, user_id: str, amount: float, email: str, cpf: str) -> dict | None:
     """
     Cria um pagamento PIX direto (Checkout API) usando 'requests'.
@@ -233,82 +244,3 @@ def check_pix_payment_status(payment_id: str) -> dict | None:
     except Exception as e:
         print(f"Erro ao verificar status do pagamento: {e}")
         return None
-
-# =============================================================================
-# FUNÇÃO DE SAQUE (PAYOUT)
-# =============================================================================
-
-def process_withdrawal(user_id: str, amount: float, pix_key: str, pix_key_type: str, description: str) -> dict:
-    """
-    Processa um saque via PIX (Payout) usando a biblioteca 'requests'
-    para fazer a chamada de API manualmente (compatível com v1).
-    """
-    
-    try:
-        access_token, env = get_access_token_and_env()
-        if not access_token:
-            return {"success": False, "message": "Erro de configuração do servidor."}
-            
-        if "MP_SELLER_EMAIL" not in st.secrets:
-             st.error("Erro fatal: MP_SELLER_EMAIL não foi encontrado nos secrets.")
-             return {"success": False, "message": "Erro de configuração do servidor."}
-        seller_email = st.secrets["MP_SELLER_EMAIL"]
-
-    except Exception as e:
-        print(f"ERRO CRÍTICO: Falha ao ler credenciais dos secrets: {e}")
-        return {"success": False, "message": "Erro de configuração do servidor."}
-
-    idempotency_key = str(uuid.uuid4())
-
-    # Payload de SAQUE (Payout) v1
-    payout_data = {
-        "transaction_amount": amount,
-        "description": description,
-        "payment_method_id": "pix",
-        "payer": {
-            "email": seller_email 
-        },
-        "point_of_interaction": {
-            "type": "PIX",
-            "transaction_data": {
-                "key": pix_key,
-                "key_type": pix_key_type
-            }
-        }
-    }
-    
-    url = "https://api.mercadopago.com/v1/payments"
-    
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json",
-        "X-Idempotency-Key": idempotency_key
-    }
-
-    try:
-        response = requests.post(url, json=payout_data, headers=headers)
-        api_response = response.json()
-
-        if response.status_code in [200, 201]:
-            status = api_response.get("status", "desconhecido")
-            status_detail = api_response.get("status_detail", "Sucesso")
-            
-            print(f"Saque criado com sucesso. ID: {api_response.get('id')}, Status: {status}")
-            
-            return {
-                "success": True, 
-                "message": f"Solicitação de saque recebida. Status: {status_detail}",
-                "payment_id": api_response.get("id"),
-                "status": status
-            }
-        else:
-            error_message = api_response.get("message", "Erro desconhecido")
-            print(f"Erro ao processar saque: {error_message}")
-            return {"success": False, "message": f"Erro do Mercado Pago: {error_message}"}
-
-    except Exception as e:
-        print(f"Erro crítico na chamada da API de Payout: {e}")
-        if 'response' in locals() and response.text:
-             print(f"Detalhes do erro da API: {response.text}")
-             return {"success": False, "message": f"Erro da API: {response.text}"}
-        return {"success": False, "message": "Ocorreu um erro inesperado ao processar o saque."}

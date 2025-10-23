@@ -1,10 +1,13 @@
 # views/carteira.py - VERSÃO COMPLETA COM 3 ABAS
 # (PIX Direto, Checkout Pro, Saque)
+# ATUALIZADO PARA USAR core/payment.py e core/payout.py
 
 import streamlit as st
 import locale
 import time
-from core import user_service, payment_service
+# --- IMPORTAÇÕES ATUALIZADAS ---
+from core import user_service, payment, payout
+# -------------------------------
 from styles.wallet import load_wallet_styles
 
 # Tenta configurar locale pt_BR
@@ -15,7 +18,6 @@ except Exception:
 
 # =============================================================================
 # FUNÇÕES DE RENDERIZAÇÃO DE COMPONENTES
-# (Funções que existiam no seu arquivo original)
 # =============================================================================
 
 def render_header():
@@ -88,7 +90,7 @@ def render_feature_cards_withdraw():
         """, unsafe_allow_html=True)
 
 # =============================================================================
-# ABA 1: DEPÓSITO PIX DIRETO (Seu novo código)
+# ABA 1: DEPÓSITO PIX DIRETO
 # =============================================================================
 
 def render_pix_deposit_tab(username, user_id, user_email):
@@ -102,7 +104,7 @@ def render_pix_deposit_tab(username, user_id, user_email):
                     <line x1="2" y1="10" x2="22" y2="10"></line>
                 </svg>
             </div>
-            <h2 style="margin: 0;">💳 Depósito via PIX</h2>
+            <h2 style="margin: 0;">Depósito via PIX</h2>
         </div>
     """, unsafe_allow_html=True)
     
@@ -141,7 +143,7 @@ def render_pix_deposit_tab(username, user_id, user_email):
     else:
         # Formulário para gerar PIX
         with st.form("pix_deposit_form"):
-            st.markdown("### 💰 Quanto deseja depositar?")
+            st.markdown("### Quanto deseja depositar?")
             
             amount = st.number_input(
                 "Valor (R$)",
@@ -153,7 +155,7 @@ def render_pix_deposit_tab(username, user_id, user_email):
                 help="Valor mínimo: R$ 5,00"
             )
             
-            st.markdown("### 📧 Dados do Pagamento (Obrigatórios)")
+            st.markdown("### Dados do Pagamento (Obrigatórios)")
             
             email = st.text_input(
                 "E-mail",
@@ -162,8 +164,6 @@ def render_pix_deposit_tab(username, user_id, user_email):
                 help="E-mail para receber comprovante"
             )
             
-            # --- CORREÇÃO DE BUG ---
-            # CPF é obrigatório para a API, removemos o "(opcional)"
             cpf = st.text_input(
                 "CPF (obrigatório)",
                 placeholder="000.000.000-00",
@@ -171,29 +171,27 @@ def render_pix_deposit_tab(username, user_id, user_email):
                 help="Seu CPF é obrigatório para gerar o PIX"
             )
             
-            submitted = st.form_submit_button("🔐 Gerar Código PIX", use_container_width=True)
+            submitted = st.form_submit_button(" Gerar Código PIX", use_container_width=True)
             
             if submitted:
-                # --- CORREÇÃO DE BUG ---
-                # Adicionada verificação de CPF
                 if not email or not cpf:
-                    st.error("❌ Por favor, preencha seu e-mail e CPF.")
+                    st.error("Por favor, preencha seu e-mail e CPF.")
                 elif amount < 5:
-                    st.error("❌ O valor mínimo para depósito é R$ 5,00")
+                    st.error("O valor mínimo para depósito é R$ 5,00")
                 else:
-                    # Criar pagamento PIX
-                    with st.spinner("🔄 Gerando código PIX..."):
-                        pix_result = payment_service.create_pix_payment(
+                    with st.spinner("Gerando código PIX..."):
+                        # --- CHAMADA ATUALIZADA ---
+                        pix_result = payment.create_pix_payment(
                             username=username,
                             user_id=user_id,
                             amount=amount,
                             email=email,
-                            cpf=cpf # Passa o CPF que agora é obrigatório
+                            cpf=cpf 
                         )
                     
                     if pix_result and pix_result.get("success"):
                         st.session_state['current_pix_payment'] = pix_result
-                        st.success("✅ PIX gerado com sucesso!")
+                        st.success("PIX gerado com sucesso!")
                         time.sleep(0.5)
                         st.rerun()
 
@@ -205,7 +203,7 @@ def display_pix_payment(pix_data: dict):
     qr_code = pix_data.get('qr_code')
     qr_code_base64 = pix_data.get('qr_code_base64')
     
-    st.success("✅ PIX gerado com sucesso!")
+    st.success("PIX gerado com sucesso!")
     
     st.markdown("""
         <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15)); 
@@ -214,7 +212,7 @@ def display_pix_payment(pix_data: dict):
                     padding: 2rem; 
                     margin: 1rem 0;">
             <h3 style="text-align: center; color: #10b981; margin-bottom: 1.5rem;">
-                💳 Pague com PIX
+                Pague com PIX
             </h3>
         </div>
     """, unsafe_allow_html=True)
@@ -222,7 +220,7 @@ def display_pix_payment(pix_data: dict):
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.markdown("### 📱 Escaneie o QR Code")
+        st.markdown("### Escaneie o QR Code")
         if qr_code_base64:
             st.image(
                 f"data:image/png;base64,{qr_code_base64}",
@@ -230,50 +228,51 @@ def display_pix_payment(pix_data: dict):
                 width=250 # Tamanho fixo
             )
         else:
-            st.warning("⚠️ QR Code não disponível")
+            st.warning("QR Code não disponível")
     
     with col2:
-        st.markdown("### 📋 Ou copie o código")
+        st.markdown("### Ou copie o código")
         if qr_code:
             st.text_area("PIX Copia e Cola", qr_code, height=250)
         else:
-            st.error("❌ Código PIX não disponível")
+            st.error("Código PIX não disponível")
     
     st.divider()
-    st.info(f"**🆔 ID do Pagamento:** `{payment_id}` | **Status:** `{pix_data.get('status')}`")
+    st.info(f"**ID do Pagamento:** `{payment_id}` | **Status:** `{pix_data.get('status')}`")
     
     col_check, col_cancel = st.columns(2)
     
-    if st.button("🔄 Verificar Pagamento", use_container_width=True, type="primary"):
-        with st.spinner("🔍 Verificando pagamento..."):
-            status_info = payment_service.check_pix_payment_status(payment_id)
+    if st.button("Verificar Pagamento", use_container_width=True, type="primary"):
+        with st.spinner("Verificando pagamento..."):
+            # --- CHAMADA ATUALIZADA ---
+            status_info = payment.check_pix_payment_status(payment_id)
             
             if status_info:
                 if status_info['status'] == 'approved':
-                    st.success("✅ Pagamento aprovado! Atualizando saldo...")
+                    st.success("Pagamento aprovado! Atualizando saldo...")
                     # Limpar sessão
                     del st.session_state['current_pix_payment']
                     time.sleep(2)
                     st.balloons()
                     st.rerun()
                 elif status_info['status'] == 'pending':
-                    st.warning("⏳ Pagamento ainda pendente. Aguardando confirmação...")
+                    st.warning("Pagamento ainda pendente. Aguardando confirmação...")
                 elif status_info['status'] == 'rejected':
-                    st.error("❌ Pagamento rejeitado. Tente novamente.")
+                    st.error("Pagamento rejeitado. Tente novamente.")
                     del st.session_state['current_pix_payment']
                     time.sleep(1)
                     st.rerun()
                 else:
-                    st.info(f"ℹ️ Status: {status_info['status']}")
+                    st.info(f"Status: {status_info['status']}")
             else:
-                st.error("❌ Erro ao verificar status. Tente novamente.")
+                st.error("Erro ao verificar status. Tente novamente.")
     
-    if st.button("❌ Cancelar", use_container_width=True):
+    if st.button("Cancelar", use_container_width=True):
         del st.session_state['current_pix_payment']
         st.rerun()
 
 # =============================================================================
-# ABA 2: DEPÓSITO CHECKOUT PRO (Seu código antigo)
+# ABA 2: DEPÓSITO CHECKOUT PRO
 # =============================================================================
 
 def render_deposit_checkout_tab(username, user_id, user_email):
@@ -286,7 +285,7 @@ def render_deposit_checkout_tab(username, user_id, user_email):
                     <polyline points="19 12 12 19 5 12"></polyline>
                 </svg>
             </div>
-            <h2 style="margin: 0;">🔗 Depósito via Checkout Pro</h2>
+            <h2 style="margin: 0;">Depósito via Checkout Pro</h2>
         </div>
     """, unsafe_allow_html=True)
     
@@ -306,7 +305,8 @@ def render_deposit_checkout_tab(username, user_id, user_email):
 
         if submitted:
             with st.spinner("Gerando link de pagamento seguro..."):
-                preference = payment_service.create_payment_preference(
+                # --- CHAMADA ATUALIZADA ---
+                preference = payment.create_payment_preference(
                     username=username,
                     user_id=user_id,
                     user_email=user_email,
@@ -318,7 +318,7 @@ def render_deposit_checkout_tab(username, user_id, user_email):
                 if payment_link:
                     st.success("✓ Link de pagamento gerado com sucesso!")
                     st.link_button(
-                        "💳 Pagar com Mercado Pago", 
+                        "Pagar com Mercado Pago", 
                         payment_link, 
                         use_container_width=True
                     )
@@ -328,7 +328,7 @@ def render_deposit_checkout_tab(username, user_id, user_email):
                 st.error("✕ Houve um erro ao se comunicar com o Mercado Pago.")
 
 # =============================================================================
-# ABA 3: SAQUE (Seu código antigo)
+# ABA 3: SAQUE
 # =============================================================================
 
 def render_withdraw_tab(user_id, balance):
@@ -342,7 +342,7 @@ def render_withdraw_tab(user_id, balance):
                     <polyline points="5 12 12 5 19 12"></polyline>
                 </svg>
             </div>
-            <h2 style="margin: 0;">💸 Sacar da Carteira</h2>
+            <h2 style="margin: 0;">Sacar da Carteira</h2>
         </div>
     """, unsafe_allow_html=True)
     
@@ -369,6 +369,7 @@ def render_withdraw_tab(user_id, balance):
             "Tipo de chave Pix",
             options=pix_key_type_display.keys()
         )
+        # Nota: A API de Payout v1 não usa o tipo, mas guardamos para o futuro
         pix_key_type = pix_key_type_display[pix_key_type_label]
         
         pix_key = st.text_input(
@@ -381,15 +382,16 @@ def render_withdraw_tab(user_id, balance):
 
         if withdraw_submitted:
             if not pix_key:
-                st.warning("⚠ Por favor, insira sua chave Pix.")
+                st.warning("Por favor, insira sua chave Pix.")
             elif amount_to_withdraw > balance:
                 st.error(f"✕ Saldo insuficiente. Você tem {locale.currency(balance, grouping=True, symbol='R$')} disponível.")
             else:
                 with st.spinner("Processando sua solicitação de saque..."):
                     description_for_mp = f"Saque Wyden365 - Usuário {user_id}"
                     
-                    response = payment_service.process_withdrawal(
-                        user_id=user_id,
+                    # --- CHAMADA ATUALIZADA (E AGORA COMPLETA) ---
+                    response = payout.process_withdrawal(
+                        user_id=str(user_id),
                         amount=amount_to_withdraw, 
                         pix_key=pix_key,
                         pix_key_type=pix_key_type,
@@ -397,6 +399,7 @@ def render_withdraw_tab(user_id, balance):
                     )
                 
                 if response["success"]:
+                    # Debita o valor do saldo
                     user_service.update_user_balance(user_id, -amount_to_withdraw)
                     st.success(f"✓ {response['message']}")
                     st.balloons()
@@ -414,7 +417,7 @@ def render():
     load_wallet_styles()
     
     if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
-        st.error("✕ Acesso negado. Por favor, faça o login primeiro.")
+        st.error("Acesso negado. Por favor, faça o login primeiro.")
         st.stop()
     
     render_header()
@@ -433,9 +436,9 @@ def render():
     
     # --- ESTRUTURA DE ABAS ATUALIZADA ---
     tab_pix, tab_checkout, tab_withdraw = st.tabs([
-        "💳 PIX Instantâneo", 
-        "🔗 Checkout Pro", 
-        "💸 Sacar"
+        "PIX Instantâneo", 
+        "Checkout Pro", 
+        "Sacar"
     ])
     
     with tab_pix:
@@ -446,3 +449,4 @@ def render():
 
     with tab_withdraw:
         render_withdraw_tab(user_id, balance)
+
