@@ -207,7 +207,7 @@ def render_sidebar_header():
     """Renderiza o header da sidebar"""
     st.markdown("""
         <div class="sidebar-header">
-            <div class="sidebar-title">Wyden365</div>
+            <div class="sidebar-title">InterBet 365</div>
             <div class="sidebar-subtitle">Apostas em jogos universitários</div>
         </div>
     """, unsafe_allow_html=True)

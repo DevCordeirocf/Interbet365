@@ -377,7 +377,7 @@ def render_withdraw_tab(user_id, balance):
                 st.error(f"✕ Saldo insuficiente. Você tem {locale.currency(balance, grouping=True, symbol='R$')} disponível.")
             else:
                 with st.spinner("Processando sua solicitação de saque..."):
-                    description_for_mp = f"Saque Wyden365 - Usuário {user_id}"
+                    description_for_mp = f"Saque InterBet 365 - Usuário {user_id}"
                     
                     response = payout.process_withdrawal(
                         user_id=str(user_id),

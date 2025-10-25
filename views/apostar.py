@@ -151,7 +151,7 @@ def render():
     
     st.markdown("""
         <div style="text-align: center; margin: 0;">
-            <h1 style="margin: 0.5rem 0;">Wyden 365 - Apostas Esportivas</h1>
+            <h1 style="margin: 0.5rem 0;">InterBet 365 - Apostas UniEsportivas</h1>
             <p style="color: hsl(220 10% 60%); font-size: 1.1rem; margin: 0.5rem 0;">
                 Clique em qualquer opção de aposta para começar!
             </p>

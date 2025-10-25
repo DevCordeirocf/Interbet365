@@ -1,4 +1,4 @@
-# Wyden365.py
+# InterBet365.py
 # Ponto de entrada principal e roteador da aplicação.
 
 import streamlit as st
@@ -16,7 +16,7 @@ from styles.sidebar import load_sidebar_styles, render_sidebar_header, render_us
 
 # --- 1. Configuração da Página ---
 st.set_page_config(
-    page_title="Wyden365",
+    page_title="InterBet 365",
     page_icon="🐯",
     layout="wide",
     initial_sidebar_state="expanded",
