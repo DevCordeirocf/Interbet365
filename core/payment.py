@@ -6,6 +6,9 @@ import requests
 import mercadopago
 from datetime import datetime, timedelta, timezone
 
+
+ngrok_base_url = "https://2b6b7ec19e4b.ngrok-free.app" # Substitua pelo seu URL do ngrok
+
 def get_access_token_and_env():
     env = st.secrets.get("ENVIRONMENT", "test") 
     access_token = None
@@ -44,7 +47,6 @@ def create_payment_preference(username: str, user_id: int, user_email: str, amou
     if not sdk:
         return None 
 
-    ngrok_base_url = "https://53c4-67fd-08ad.ngrok-free.app" 
     webhook_url = f"{ngrok_base_url}/webhook/mercado-pago" 
     redirect_url = f"{ngrok_base_url}/Carteira"
 
@@ -108,7 +110,6 @@ def create_pix_payment(username: str, user_id: str, amount: float, email: str, c
         return None
 
     external_reference = f"user_{user_id}_deposit_pix_{int(time.time())}"
-    ngrok_base_url = "https://53c4-67fd-08ad.ngrok-free.app"
     webhook_url = f"{ngrok_base_url}/webhook/mercado-pago"
 
     brasil_tz = timezone(timedelta(hours=-3))
