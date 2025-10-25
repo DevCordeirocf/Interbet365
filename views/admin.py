@@ -251,9 +251,9 @@ def render():
     st.title("Painel de Administração")
     
     tab_matches, tab_teams, tab_modalities = st.tabs([
-        "⚽ Gerenciar Partidas", 
-        "🏃 Gerenciar Times", 
-        "🏆 Gerenciar Modalidades"
+        "Gerenciar Partidas", 
+        "Gerenciar Times", 
+        "Gerenciar Modalidades"
     ])
     
     with tab_modalities:

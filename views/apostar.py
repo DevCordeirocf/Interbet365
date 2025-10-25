@@ -1,7 +1,40 @@
 import streamlit as st
 import datetime
 from core import match_service, bet_service, user_service
-from styles.betting import load_betting_styles, render_match_card, render_confirmation_box
+from styles.betting import load_betting_styles, render_match_card
+
+
+def render_confirmation_box(label, odds, balance):
+    """
+    Renderiza a caixa de confirmação de aposta.
+    """
+    try:
+        balance_str = f"{balance:.2f}"
+    except Exception:
+        balance_str = str(balance)
+
+    # Define a cor do saldo
+    balance_color = "#FF7A7A" if balance <= 0 else "#4ade80"
+    
+    st.markdown(f"""
+        <div class="bet-confirmation">
+            <div class="confirmation-title">Confirmar Aposta</div>
+            <div class="confirmation-info">
+                <div class="info-row">
+                    <span class="info-label">Sua Escolha:</span>
+                    <span class="info-value">{label}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Odds:</span>
+                    <span class="info-value">{odds:.2f}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Saldo Disponível:</span>
+                    <span class="balance-value" style="color: {balance_color};">R$ {balance_str}</span>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
 
 
@@ -25,7 +58,9 @@ def render_bet_confirmation(match, intent, user_id=None):
         return
 
     balance = user_service.get_user_balance(user_id)
-    balance_brl = f"R$ {balance:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+    
+    # Verifica se o saldo é insuficiente
+    has_insufficient_balance = balance <= 0
     
     st.markdown("---")
     st.subheader("Confirmar Aposta")
@@ -39,21 +74,50 @@ def render_bet_confirmation(match, intent, user_id=None):
         st.markdown(f"**{intent['team_b']}**")
     
     st.markdown(f"*{format_match_datetime(intent['match_datetime'])}*")
+    
+    # Renderiza a box de confirmação
     render_confirmation_box(intent['label'], intent['odds'], balance)
+    
+    # Se não há saldo, mostra erro FORA da box
+    if has_insufficient_balance:
+        st.markdown("""
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span style="color: #fecaca; font-weight: 700; font-size: 0.9rem;">ATENÇÃO</span>
+                </div>
+                <p style="color: #fecaca; margin: 0; font-size: 0.95rem; line-height: 1.5;">
+                    Saldo insuficiente. Por favor, deposite na sua carteira para continuar.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        return
     
     st.subheader("Valor da Aposta")
     
+    # Define valor padrão seguro baseado no saldo
+    default_amount = min(10.0, float(balance))
+    max_amount = max(1.0, float(balance))
+    
     if 'bet_amount' not in st.session_state:
-        st.session_state['bet_amount'] = 10.0
+        st.session_state['bet_amount'] = default_amount
+    
+    # Garante que o valor não exceda o saldo disponível
+    current_amount = min(st.session_state['bet_amount'], max_amount)
         
     amount = st.number_input(
         "Valor (R$)", 
-        min_value=1.00,
-        max_value=float(balance) if balance > 0 else 1.00,
-        value=st.session_state['bet_amount'],
-        step=5.00, 
+        min_value=1.0,
+        max_value=max_amount,
+        value=current_amount,
+        step=5.0, 
         format="%.2f",
-        key=f"bet_amount_input_{match['id']}"  # Unique key per match
+        key=f"bet_amount_input_{match['id']}"
     )
     
     st.session_state['bet_amount'] = amount
@@ -134,14 +198,12 @@ def format_match_datetime(dt):
                 dt_obj = None
         if dt_obj is None:
             try:
-                # fallback para fromisoformat (Python 3.7+)
                 dt_obj = datetime.datetime.fromisoformat(dt)
             except Exception:
                 return dt
     else:
         return str(dt)
 
-    # Formata em pt-BR: dd/mm/YYYY às HH:MM
     try:
         return dt_obj.strftime("%d/%m/%Y às %H:%M")
     except Exception:
@@ -153,7 +215,7 @@ def render():
     
     st.markdown("""
         <div style="text-align: center; margin: 0;">
-            <h1 style="margin: 0.5rem 0;">Wyden 365 - Apostas Esportivas</h1>
+            <h1 style="margin: 0.5rem 0;">InterBet 365 - Apostas UniEsportivas</h1>
             <p style="color: hsl(220 10% 60%); font-size: 1.1rem; margin: 0.5rem 0;">
                 Clique em qualquer opção de aposta para começar!
             </p>
@@ -171,7 +233,6 @@ def render():
 
     st.subheader("Partidas Disponíveis")
     
-    # Container para âncora de rolagem
     bet_anchor = st.empty()
     
     for match in matches:
@@ -186,7 +247,6 @@ def render():
         # Formata a data/hora da partida para exibição
         formatted_dt = format_match_datetime(match.get('match_datetime'))
         
-        # Renderiza o card com todos os detalhes
         render_match_card(
             team_a_name=team_a_name,
             team_b_name=team_b_name,
@@ -225,7 +285,6 @@ def render():
                         <div class="odds-display">{match['odds_a']:.2f}</div>
                     </div>
                 """, unsafe_allow_html=True)
-                # Botão claro e clicável abaixo do card para apostar na Casa
                 if st.button(f"Apostar na Casa — {match['odds_a']:.2f}", key=f"bet_a_{match['id']}", use_container_width=True,
                            help=f"Apostar na vitória de {team_a_name}"):
                     st.session_state['bet_intent'] = {
@@ -281,7 +340,6 @@ def render():
                     st.rerun()
 
         with col3:
-            # Card clicável para vitória do time B
             if st.session_state.get('bet_intent') and st.session_state['bet_intent'].get('match_id') == match['id'] and st.session_state['bet_intent'].get('prediction') == 'B':
                 st.markdown(f"""
                     <div class="bet-button-container" style="border-color: hsl(9 100% 59%) !important; background: hsl(9 100% 59% / 0.1) !important;">
@@ -318,13 +376,10 @@ def render():
                         'team_b': team_b_name,
                         'match_datetime': match['match_datetime']
                     }
-                    # Adiciona um identificador para rolagem no rerun
                     st.session_state['scroll_to_bet'] = True
                     st.rerun()
 
-        # Se esta é a partida selecionada, mostra o card de confirmação aqui
         if st.session_state.get('bet_intent') and st.session_state['bet_intent'].get('match_id') == match['id']:
-            # Âncora para rolagem automática
             if st.session_state.get('scroll_to_bet'):
                 bet_anchor.markdown('<div id="bet-confirmation"></div>', unsafe_allow_html=True)
                 st.markdown("""

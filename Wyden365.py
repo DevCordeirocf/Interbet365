@@ -1,4 +1,4 @@
-# Wyden365.py
+# InterBer365.py
 # Ponto de entrada principal e roteador da aplicação.
 
 import streamlit as st
@@ -16,19 +16,66 @@ from styles.sidebar import load_sidebar_styles, render_sidebar_header, render_us
 
 # --- 1. Configuração da Página ---
 st.set_page_config(
-    page_title="Wyden365",
+    page_title="InterBet 365",
     page_icon="🐯",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+# --- CSS para esconder tudo, menos o menu de hambúrguer ---
+custom_style = """
+<style>
+/* Esconde o rodapé */
+footer {visibility: hidden;}
+
+/* Esconde o botão de Deploy */
+button[kind="header"] {display: none !important;}
+
+/* Esconde título, logo e toolbar */
+header [data-testid="stHeader"] {display: none !important;}
+div[data-testid="stToolbar"] {background: transparent !important;}
+}
+
+/* Deixa só o botão de menu hambúrguer visível */
+button[title="Main menu"] {
+    visibility: visible !important;
+    position: fixed !important;
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 9999 !important;
+    opacity: 0.8 !important;
+}
+
+/* Remove sombra e bordas da barra superior */
+header {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+</style>
+"""
+st.markdown(custom_style, unsafe_allow_html=True)
+
 # --- 2. CSS Customizado ---
 hide_streamlit_style = """
 <style>
-#MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+section[data-testid="stSidebar"] {
+    padding-top: 0rem;
+}
+.block-container {
+    padding-top: 0rem;
+    padding-bottom: 5rem;
+}
+
+/* Se quiser remover novamente a sidebar ou deploy no futuro, basta descomentar:
+div[data-testid="stToolbar"] { display: none; }
+.stDeployButton { display: none; }
+*/
 </style>
 """
+
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # --- 3. Inicialização do Cliente Supabase ---
@@ -37,7 +84,7 @@ def get_supabase_client():
     return init_supabase_client()
 supabase = get_supabase_client()
 if not supabase:
-    st.error("Falha fatal ao conectar com o banco de dados."); st.stop()
+    st.error("Falha ao conectar com o banco de dados."); st.stop()
 
 # --- 4. Gerenciamento de Estado da View ---
 is_logged_in = 'authenticated' in st.session_state and st.session_state['authenticated']
@@ -98,7 +145,7 @@ def render_sidebar():
             st.session_state['selected_page'] = selected
             
             # Área do usuário no final da sidebar
-            st.markdown("<div style='height: 210px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 213px;'></div>", unsafe_allow_html=True)
             render_user_area(st.session_state['username'], st.session_state['email'])
             
             if st.button("Sair", use_container_width=True, key="sidebar_logout"):

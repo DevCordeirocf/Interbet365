@@ -8,7 +8,7 @@ def render_brand(subtitle=None):
     
     st.markdown(f"""
         <div style="margin: 1rem 0;">
-            <h1 class='brand-title'>Wyden 365</h1>
+            <h1 class='brand-title'>InterBet 365</h1>
             {subtitle_html}
         </div>
     """, unsafe_allow_html=True)
@@ -17,7 +17,7 @@ def render_brand(subtitle=None):
 def render_footer():
     """Renderiza o rodapé"""
     st.markdown("""
-        <p class='footer'>© 2025 Wyden 365. Jogue com responsabilidade. +18</p>
+        <p class='footer'>© 2025 InterBet 365. Jogue com responsabilidade. +18</p>
     """, unsafe_allow_html=True)
 
 def load_common_styles():
