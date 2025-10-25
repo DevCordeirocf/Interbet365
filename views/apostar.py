@@ -4,6 +4,8 @@ from core import match_service, bet_service, user_service
 from styles.betting import load_betting_styles, render_match_card, render_confirmation_box
 
 
+
+
 def render_bet_confirmation(match, intent, user_id=None):
     """Renderiza o card de confirmação de aposta"""
     if not user_id:
@@ -177,9 +179,9 @@ def render():
         team_b = match.get('team_b', {})
         team_a_name = team_a.get('name', 'Time A')
         team_b_name = team_b.get('name', 'Time B')
+        modality = match.get('modality', {})
+        modality_name = modality.get('name', 'Esporte')
         
-        # Pega a modalidade do time A (ambos times devem ter a mesma modalidade)
-        modality = team_a.get('modalities', {}).get('name') if team_a else None
         
         # Formata a data/hora da partida para exibição
         formatted_dt = format_match_datetime(match.get('match_datetime'))
@@ -189,7 +191,7 @@ def render():
             team_a_name=team_a_name,
             team_b_name=team_b_name,
             match_datetime=match['match_datetime'],
-            modality=modality,
+            modality=modality_name,
             formatted_dt=formatted_dt
         )
 
