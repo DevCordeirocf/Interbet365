@@ -1,8 +1,8 @@
-# Wyden365 
+# Interbet365
 
 ## Visão Geral do Projeto
 
-O Wyden365 é uma aplicação web interativa desenvolvida com **Streamlit** que simula uma plataforma de apostas. Ele oferece funcionalidades de autenticação de usuário, gestão de carteira, registro e acompanhamento de apostas, além de uma área administrativa para controle da plataforma. A aplicação utiliza **Supabase** como backend para gerenciamento de banco de dados e autenticação, garantindo uma experiência segura e escalável.
+O Interbet365 é uma aplicação web interativa desenvolvida com **Streamlit** que simula uma plataforma de apostas. Ele oferece funcionalidades de autenticação de usuário, gestão de carteira, registro e acompanhamento de apostas, além de uma área administrativa para controle da plataforma. A aplicação utiliza **Supabase** como backend para gerenciamento de banco de dados e autenticação, garantindo uma experiência segura e escalável.
 
 ## Funcionalidades Principais
 
