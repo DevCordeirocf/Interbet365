@@ -1,106 +1,91 @@
-# Interbet365
+> ⚠️ **Aviso Importante: Projeto Descontinuado**
+> 
+> Este repositório contém o código-fonte de um projeto desenvolvido para fins **estritamente acadêmicos**. O desenvolvimento foi **finalizado** e o projeto **não receberá mais atualizações ou manutenção**.
 
-## Visão Geral do Projeto
+# InterBet 365 - Um Estudo de Caso em Streamlit e APIs
 
-O Interbet365 é uma aplicação web interativa desenvolvida com **Streamlit** que simula uma plataforma de apostas. Ele oferece funcionalidades de autenticação de usuário, gestão de carteira, registro e acompanhamento de apostas, além de uma área administrativa para controle da plataforma. A aplicação utiliza **Supabase** como backend para gerenciamento de banco de dados e autenticação, garantindo uma experiência segura e escalável.
+O InterBet 365 foi uma aplicação web funcional que simulava uma plataforma de apostas, criada como um trabalho prático para demonstrar habilidades em desenvolvimento de software, integração de APIs e gestão de sistemas web.
 
-## Funcionalidades Principais
+## Status do Projeto: Arquivado
 
-*   **Autenticação de Usuário**: Sistema completo de login e registro com e-mail e senha, gerenciado pelo Supabase Auth.
-*   **Navegação Intuitiva**: Interface de usuário amigável com um menu de opções horizontal para fácil acesso às diferentes seções da aplicação.
-*   **Apostas**: Seção dedicada onde os usuários podem realizar suas apostas.
-*   **Minhas Apostas**: Visualização e acompanhamento das apostas realizadas pelo usuário.
-*   **Carteira**: Gestão de fundos do usuário, com provável integração de pagamentos via **Mercado Pago**.
-*   **Painel Administrativo**: Área restrita para administradores com funcionalidades de gestão da plataforma.
-*   **Backend Robusto**: Utiliza **Flask** e possivelmente **webhooks** para processamento em segundo plano, como integração com Mercado Pago.
+O projeto foi concluído e está **arquivado**. A decisão de não dar continuidade ao desenvolvimento foi tomada devido à **natureza controversa do tema de apostas**, que pode ser mal interpretado. O código é mantido neste repositório exclusivamente como um registro de portfólio e para fins de consulta técnica.
 
-## Tecnologias Utilizadas
+**Este projeto não é um serviço comercial e não deve ser utilizado para fins de apostas reais.**
 
-O projeto Wyden365 é construído com as seguintes tecnologias:
+## Visão Geral da Arquitetura
 
-*   **Streamlit**: Framework Python para criação rápida de aplicações web interativas.
-*   **Streamlit-Option-Menu**: Componente para menus de navegação estilizados no Streamlit.
-*   **Supabase**: Plataforma de backend como serviço (BaaS) que oferece banco de dados PostgreSQL, autenticação, armazenamento e APIs em tempo real.
-*   **psycopg2-binary**: Adaptador PostgreSQL para Python, utilizado para conexão com o banco de dados Supabase.
-*   **Mercado Pago**: Plataforma de pagamentos online, integrada para transações financeiras na carteira do usuário.
-*   **Pydantic**: Biblioteca para validação de dados e configurações.
-*   **Flask**: Microframework web Python, possivelmente utilizado para lidar com webhooks ou APIs específicas.
-*   **python-dotenv**: Para gerenciar variáveis de ambiente de forma segura.
+A plataforma foi construída utilizando um conjunto de tecnologias modernas para criar uma experiência de usuário interativa e um backend robusto:
 
-## Estrutura do Projeto
+*   **Frontend e Interface do Usuário:** **Streamlit**, um framework Python que permite a criação rápida de aplicações web ricas em dados.
+*   **Backend e Banco de Dados:** **Supabase**, uma alternativa open-source ao Firebase, que forneceu o banco de dados PostgreSQL, autenticação de usuários e APIs de acesso aos dados.
+*   **Servidor de Notificações (Webhook):** Um microserviço construído com **Flask** para receber e processar notificações em tempo real, como a confirmação de pagamentos.
+*   **Integração de Pagamentos:** A API do **Mercado Pago** foi utilizada para simular as transações de depósito e saque na carteira virtual dos usuários.
 
-```
-Wyden365/
-├── core/                  # Módulos principais da aplicação (ex: db.py, user_service.py)
-├── models.py              # Definições de modelos de dados (se houver)
-├── views/                 # Páginas/Módulos da aplicação (ex: apostar.py, carteira.py, admin.py)
-├── webhook_server/        # Possível servidor de webhook (ex: para Mercado Pago)
-├── Wyden365.py            # Ponto de entrada principal da aplicação Streamlit
-├── requirements.txt       # Dependências do projeto
-├── README.md              # Este arquivo
-```
+## Como Executar Localmente (Para Fins de Estudo)
 
-## Como Executar o Projeto Localmente
-
-Para configurar e executar o Wyden365 em sua máquina local, siga os passos abaixo:
-
-### Pré-requisitos
-
-Certifique-se de ter o Python 3.8+ instalado em seu sistema.
+Se você deseja analisar o código ou executá-lo em um ambiente local, siga os passos abaixo.
 
 ### 1. Clonar o Repositório
 
 ```bash
-git clone https://github.com/DevCordeirocf/Wyden365.git
-cd Wyden365
+git clone https://github.com/DevCordeirocf/Interbet365.git
+cd Interbet365
 ```
 
-### 2. Criar e Ativar um Ambiente Virtual
+### 2. Instalar as Dependências
 
-É altamente recomendável usar um ambiente virtual para gerenciar as dependências do projeto.
+É altamente recomendado criar um ambiente virtual antes de instalar as dependências.
 
 ```bash
+# Crie um ambiente virtual (opcional, mas recomendado)
 python -m venv venv
-source venv/bin/activate  # No Windows: .\venv\Scripts\activate
-```
+# Ative o ambiente (Linux/macOS)
+source venv/bin/activate
+# No Windows: .\venv\Scripts\activate
 
-### 3. Instalar as Dependências
-
-```bash
+# Instale as dependências
 pip install -r requirements.txt
 ```
 
-### 4. Configurar Variáveis de Ambiente
+### 3. Configurar Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz do projeto (`Wyden365/.env`) e adicione suas credenciais do Supabase e Mercado Pago. Exemplo:
+Crie um arquivo chamado `.env` na raiz do projeto (`Interbet365/.env`). Este arquivo centraliza todas as credenciais e configurações sensíveis. Preencha-o com suas próprias chaves de API:
 
-```dotenv
-SUPABASE_URL="SUA_URL_SUPABASE"
-SUPABASE_KEY="SUA_CHAVE_ANON_SUPABASE"
-MERCADOPAGO_ACCESS_TOKEN="SEU_ACCESS_TOKEN_MERCADOPAGO"
+```env
+# Credenciais do Mercado Pago e Ambiente
+# Mude para "prod" para usar as chaves de produção
+ENVIRONMENT="test"
+MP_ACCESS_TOKEN_TEST="SEU_TOKEN_DE_TESTE_DO_MERCADO_PAGO"
+MP_ACCESS_TOKEN_PROD="SEU_TOKEN_DE_PRODUCAO_DO_MERCADO_PAGO"
+MP_SELLER_EMAIL="SEU_EMAIL_DE_VENDEDOR_DO_MERCADO_PAGO"
+
+# Credenciais do Supabase
+SUPABASE_URL="SUA_URL_DO_PROJETO_SUPABASE"
+SUPABASE_SERVICE_KEY="SUA_CHAVE_DE_SERVICO_(SERVICE_ROLE)_DO_SUPABASE"
 ```
 
-### 5. Executar a Aplicação Streamlit
+### 4. Executar a Aplicação Principal
+
+Com as dependências instaladas e o arquivo `.env` configurado, inicie a aplicação Streamlit:
 
 ```bash
 streamlit run Wyden365.py
 ```
 
-A aplicação será aberta automaticamente no seu navegador padrão. Se não, acesse `http://localhost:8501`.
+A aplicação estará disponível em `http://localhost:8501`.
 
-### 6. Executar o Servidor de Webhook (se aplicável)
+### 5. Executar o Servidor de Webhook
 
-Se o projeto incluir um servidor de webhook (ex: para Mercado Pago), navegue até o diretório `webhook_server` e execute-o. (Assumindo que `app.py` seja o arquivo principal do webhook).
+Para que as notificações de pagamento funcionem, o servidor Flask precisa ser executado em um terminal separado. Você também precisará de uma ferramenta como o [ngrok](https://ngrok.com/) para expor sua porta local à internet e fornecer uma URL válida ao Mercado Pago.
 
 ```bash
+# Em um novo terminal, navegue até a pasta do webhook
 cd webhook_server
-python app.py # Ou o comando de execução apropriado para seu webhook server
+
+# Execute o servidor Flask
+python app.py
 ```
 
-## Contribuição
+---
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e pull requests.
-
-## Licença
-
-Este projeto está licenciado sob a licença [MIT](https://opensource.org/licenses/MIT).
+Este README foi criado para contextualizar o estado atual do projeto e guiar desenvolvedores que queiram estudar o código-fonte. Qualquer uso fora do escopo acadêmico é desaconselhado.
