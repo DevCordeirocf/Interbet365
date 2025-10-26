@@ -1,5 +1,9 @@
 
 import streamlit as st
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 import time
 import uuid 
 import requests
@@ -9,22 +13,24 @@ import requests
 # =============================================================================
 
 def get_access_token_and_env():
-    env = st.secrets.get("ENVIRONMENT", "test") 
+    # A função load_dotenv() já foi chamada no início do arquivo.
+    # O Streamlit não carrega variáveis de ambiente automaticamente, mas o python-dotenv sim.
+    env = os.getenv("ENVIRONMENT", "test") 
     access_token = None
     
     if env == "prod":
         print("Usando credenciais de PRODUÇÃO.")
-        if "MP_ACCESS_TOKEN_PROD" not in st.secrets or not st.secrets["MP_ACCESS_TOKEN_PROD"]:
-            st.error("Erro fatal: ENVIRONMENT='prod' mas MP_ACCESS_TOKEN_PROD não foi encontrado nos secrets.")
+        if not os.getenv("MP_ACCESS_TOKEN_PROD"):
+            st.error("Erro fatal: ENVIRONMENT='prod' mas MP_ACCESS_TOKEN_PROD não foi encontrado no .env.")
             return None, None
-        access_token = st.secrets["MP_ACCESS_TOKEN_PROD"]
+        access_token = os.getenv("MP_ACCESS_TOKEN_PROD")
     
     else: 
         print("Usando credenciais de TESTE.")
-        if "MP_ACCESS_TOKEN_TEST" not in st.secrets or not st.secrets["MP_ACCESS_TOKEN_TEST"]:
-            st.error("Erro fatal: ENVIRONMENT='test' mas MP_ACCESS_TOKEN_TEST não foi encontrado nos secrets.")
+        if not os.getenv("MP_ACCESS_TOKEN_TEST"):
+            st.error("Erro fatal: ENVIRONMENT='test' mas MP_ACCESS_TOKEN_TEST não foi encontrado no .env.")
             return None, None
-        access_token = st.secrets["MP_ACCESS_TOKEN_TEST"]
+        access_token = os.getenv("MP_ACCESS_TOKEN_TEST")
         
     return access_token, env
 
@@ -39,12 +45,12 @@ def process_withdrawal(user_id: str, amount: float, pix_key: str, pix_key_type: 
         if not access_token:
             return {"success": False, "message": "Erro de configuração do servidor."}
             
-        if "MP_SELLER_EMAIL" not in st.secrets: 
-             st.error("Erro fatal: MP_SELLER_EMAIL não foi encontrado nos secrets.")
+        if not os.getenv("MP_SELLER_EMAIL"): 
+             st.error("Erro fatal: MP_SELLER_EMAIL não foi encontrado no .env.")
              return {"success": False, "message": "Erro de configuração do servidor."}
 
     except Exception as e:
-        print(f"ERRO CRÍTICO: Falha ao ler credenciais dos secrets: {e}")
+        print(f"ERRO CRÍTICO: Falha ao ler credenciais do .env: {e}")
         return {"success": False, "message": "Erro de configuração do servidor."}
 
     idempotency_key = str(uuid.uuid4())

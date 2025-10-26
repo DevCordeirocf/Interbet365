@@ -1,5 +1,9 @@
 
 import streamlit as st
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 import time
 import uuid 
 import requests
@@ -10,22 +14,22 @@ from datetime import datetime, timedelta, timezone
 ngrok_base_url = "https://1b7e46e6abe7.ngrok-free.app" # Substitua pelo seu URL do ngrok
 
 def get_access_token_and_env():
-    env = st.secrets.get("ENVIRONMENT", "test") 
+    env = os.getenv("ENVIRONMENT", "test") 
     access_token = None
     
     if env == "prod":
         print("Usando credenciais de PRODUÇÃO.")
-        if "MP_ACCESS_TOKEN_PROD" not in st.secrets or not st.secrets["MP_ACCESS_TOKEN_PROD"]:
-            st.error("Erro fatal: ENVIRONMENT='prod' mas MP_ACCESS_TOKEN_PROD não foi encontrado nos secrets.")
+        if not os.getenv("MP_ACCESS_TOKEN_PROD"):
+            st.error("Erro fatal: ENVIRONMENT='prod' mas MP_ACCESS_TOKEN_PROD não foi encontrado no .env.")
             return None, None
-        access_token = st.secrets["MP_ACCESS_TOKEN_PROD"]
+        access_token = os.getenv("MP_ACCESS_TOKEN_PROD")
     
     else: 
         print("Usando credenciais de TESTE.")
-        if "MP_ACCESS_TOKEN_TEST" not in st.secrets or not st.secrets["MP_ACCESS_TOKEN_TEST"]:
-            st.error("Erro fatal: ENVIRONMENT='test' mas MP_ACCESS_TOKEN_TEST não foi encontrado nos secrets.")
+        if not os.getenv("MP_ACCESS_TOKEN_TEST"):
+            st.error("Erro fatal: ENVIRONMENT='test' mas MP_ACCESS_TOKEN_TEST não foi encontrado no .env.")
             return None, None
-        access_token = st.secrets["MP_ACCESS_TOKEN_TEST"]
+        access_token = os.getenv("MP_ACCESS_TOKEN_TEST")
         
     return access_token, env
 
