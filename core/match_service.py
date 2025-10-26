@@ -34,14 +34,12 @@ def get_all_teams():
     supabase = init_supabase_client()
     if not supabase: return []
     try:
-        # Pede explicitamente o nome da modalidade através da chave estrangeira
         return supabase.table('teams').select('id, name, modality:modality_id(name)').order('name').execute().data
     except Exception as e:
         st.error(f"Erro ao buscar times: {e}"); return []
 
 # --- LÓGICA DO ADMIN: PARTIDAS ---
 
-# --- ALTERAÇÃO 1: Adiciona modality_id como parâmetro ---
 def create_match(team_a_id: int, team_b_id: int, match_datetime: str, odds_a: float, odds_b: float, odds_draw: float, modality_id: int):
     supabase = init_supabase_client()
     if not supabase: return None
@@ -54,7 +52,7 @@ def create_match(team_a_id: int, team_b_id: int, match_datetime: str, odds_a: fl
             'odds_b': odds_b, 
             'odds_draw': odds_draw, 
             'status': 'Agendado',
-            'modality_id': modality_id # --- ALTERAÇÃO 2: Inclui modality_id no insert ---
+            'modality_id': modality_id 
         }
         return supabase.table('matches').insert(match_data).execute().data
     except Exception as e:
@@ -76,14 +74,12 @@ def get_open_matches():
         st.error(f"Erro ao buscar partidas agendadas: {e}"); return []
     
 def finalize_match(match_id: int, result: str):
-    """Finaliza uma partida e processa as apostas."""
     supabase = init_supabase_client()
     if not supabase:
         st.error("Falha ao conectar ao banco de dados.")
         return False
 
     try:
-        # Busca a partida para pegar as Odds
         match_response = supabase.table('matches').select('odds_a, odds_b, odds_draw').eq('id', match_id).single().execute()
         if not match_response.data:
             st.error(f"Partida {match_id} não encontrada.")
@@ -91,11 +87,9 @@ def finalize_match(match_id: int, result: str):
         
         match_data = match_response.data
         
-        # Determina a odd vencedora
         odds_map = {'A': match_data['odds_a'], 'B': match_data['odds_b'], 'Empate': match_data['odds_draw']}
         winning_odd = float(odds_map[result])
 
-        # Busca TODAS as apostas pendentes para esta partida 
         bets_response = supabase.table('bets').select('*').eq('match_id', match_id).eq('status', 'Pendente').execute()
         pending_bets = bets_response.data
         

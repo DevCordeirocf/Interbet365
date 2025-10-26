@@ -31,7 +31,6 @@ def render_modalities_tab():
                 if result:
                     st.success(f"Modalidade '{modality_name}' criada com sucesso!")
                     st.rerun()
-                # Erro já é mostrado pelo service
             else:
                 st.warning("O nome da modalidade não pode ser vazio.")
     
@@ -65,7 +64,6 @@ def render_teams_tab():
                         if result:
                             st.success(f"Time '{team_name}' criado com sucesso!")
                             st.rerun()
-                        # Erro já é mostrado pelo service
                     else:
                          st.error("Modalidade selecionada inválida.")
                 else:
@@ -144,7 +142,6 @@ def render_matches_tab():
                         if result:
                             st.success("Partida criada com sucesso!")
                             st.rerun()
-                        # Erro já é mostrado pelo service
     
     st.divider()
     render_finalize_matches_section()
@@ -156,10 +153,8 @@ def render_matches_tab():
     if matches:
         display_matches = []
         for m in matches:
-            # --- CORREÇÃO APLICADA AQUI TAMBÉM ---
             modality_data = m.get('modality')
             modality_name = modality_data.get('name', 'N/A') if modality_data else 'N/A'
-            # ------------------------------------
             display_matches.append({
                 'ID': m.get('id'),
                 'Data/Hora': m.get('match_datetime'),
@@ -191,11 +186,8 @@ def render_finalize_matches_section():
             team_b = match.get('team_b', {}).get('name', 'Time B')
             match_id = match['id']
             
-            # --- CORREÇÃO APLICADA AQUI ---
-            # Verifica se 'modality' não é None antes de pegar o nome
             modality_data = match.get('modality')
             modality_name = modality_data.get('name', 'N/A') if modality_data else 'N/A'
-            # -------------------------------
             
             label = f"ID {match_id} | {modality_name}: {team_a} vs {team_b}" 
             formatted_match_names.append(label)
@@ -237,7 +229,6 @@ def render_finalize_matches_section():
 # FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO
 # ==============================
 def render():
-    """Renderiza a página de administração"""
     load_admin_styles()
     
     if 'authenticated' not in st.session_state or not st.session_state['authenticated']:

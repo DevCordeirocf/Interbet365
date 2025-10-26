@@ -1,14 +1,14 @@
 
 import streamlit as st
 from core.db import init_supabase_client
-from core.user_service import update_user_balance # Precisamos disso
+from core.user_service import update_user_balance 
 
 def create_bet(user_id: str, match_id: int, amount: float, prediction: str):
     supabase = init_supabase_client()
     if not supabase: return False
 
     
-    success = update_user_balance(user_id, -amount) # Usa sinal negativo
+    success = update_user_balance(user_id, -amount) 
     
     if success:
         try:

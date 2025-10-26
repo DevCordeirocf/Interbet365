@@ -1,20 +1,13 @@
-# InterBer365.py
-# Ponto de entrada principal e roteador da aplicação.
-
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-# Importa o CONECTOR REAL e os SERVIÇOS
 from core.db import init_supabase_client
-from core import user_service 
 
 from views import apostar, carteira, minhasApostas, admin, login_page, baccarat 
 
-# Importa os estilos
 from styles.betting import load_betting_styles
 from styles.sidebar import load_sidebar_styles, render_sidebar_header, render_user_area
 
-# --- 1. Configuração da Página ---
 st.set_page_config(
     page_title="InterBet 365",
     page_icon="🐯",
@@ -22,7 +15,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- CSS para esconder tudo, menos o menu de hambúrguer ---
 custom_style = """
 <style>
 /* Esconde o rodapé */

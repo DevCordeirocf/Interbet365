@@ -7,7 +7,7 @@ import mercadopago
 from datetime import datetime, timedelta, timezone
 
 
-ngrok_base_url = "https://2b6b7ec19e4b.ngrok-free.app" # Substitua pelo seu URL do ngrok
+ngrok_base_url = "https://1b7e46e6abe7.ngrok-free.app" # Substitua pelo seu URL do ngrok
 
 def get_access_token_and_env():
     env = st.secrets.get("ENVIRONMENT", "test") 

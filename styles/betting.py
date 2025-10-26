@@ -461,12 +461,10 @@ def load_betting_styles():
 
 
 def get_modality_icon(modality_name):
-    """Retorna o ícone apropriado para cada modalidade."""
     icons = {
         'Futsal': '⚽',
         'Basquete': '🏀',
         'Vôlei': '🏐',
-        'Handball': '🤾',
     }
     return icons.get(modality_name, '🎮')  # retorna 🎮 se a modalidade não estiver mapeada
 

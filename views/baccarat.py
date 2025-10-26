@@ -16,7 +16,6 @@ def render_baccarat_table(player_cards, banker_cards, player_value, banker_value
         
         col_player, col_banker = st.columns(2) 
 
-        # --- COLUNA DO JOGADOR ---
         with col_player:
             st.markdown('<div class="player-area"><h4>Jogador</h4></div>', unsafe_allow_html=True) 
             
