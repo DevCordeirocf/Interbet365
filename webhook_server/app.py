@@ -6,8 +6,6 @@ import os
 from pathlib import Path
 from supabase import create_client, Client
 
-# Carrega as variáveis de ambiente do arquivo .env
-# Garante que o .env seja carregado da raiz do projeto (um nível acima do webhook_server)
 dotenv_path = Path(__file__).resolve().parent.parent / '.env'
 load_dotenv(dotenv_path=dotenv_path)
 
@@ -16,28 +14,24 @@ load_dotenv(dotenv_path=dotenv_path)
 # ==============================================================================
 
 def init_supabase_client() -> Client | None:
-    """Inicializa e retorna o cliente Supabase usando credenciais do .env."""
     try:
         url = os.getenv("SUPABASE_URL")
-        # --- CORREÇÃO AQUI ---
-        # Precisamos da Service Key para o webhook ter permissão de admin
+
         key = os.getenv("SUPABASE_SERVICE_KEY") 
         # --- FIM DA CORREÇÃO ---
 
         if not url or not key:
             print("ERRO DO WEBHOOK: Credenciais SUPABASE_URL ou SUPABASE_SERVICE_KEY não encontradas no arquivo .env")
             return None
-        print(f"WEBHOOK: Conectando ao Supabase URL: {url}") # Log para confirmar
-        return create_client(url, key) # Passa a URL e a Chave
+        print(f"WEBHOOK: Conectando ao Supabase URL: {url}")
+        return create_client(url, key) 
     except Exception as e:
         print(f"ERRO DO WEBHOOK ao inicializar cliente Supabase: {e}")
         return None
 
 def update_database_on_payment(supabase: Client, external_reference: str, amount: float) -> bool:
-    """Atualiza o saldo do usuário no banco de dados após um pagamento aprovado."""
     print(f"WEBHOOK: Tentando atualizar saldo para a referência: {external_reference}...")
     try:
-        # Extrai o user_id (UUID) da referência. Formato: "user_UUID_deposit_..."
         parts = external_reference.split('_')
         if len(parts) < 2 or parts[0] != 'user':
             print(f"ERRO DO WEBHOOK: A referência externa '{external_reference}' tem um formato inválido.")
@@ -45,30 +39,25 @@ def update_database_on_payment(supabase: Client, external_reference: str, amount
         user_id = parts[1]
         print(f"WEBHOOK: User ID extraído: {user_id}")
 
-        # 1. Busca o perfil e o saldo atual
-        # Usamos single() pois esperamos apenas um perfil por ID
         profile_res = supabase.table('profiles').select('balance').eq('id', user_id).single().execute()
         
-        # Verifica se a busca retornou dados
+
         if not profile_res.data:
             print(f"ERRO DO WEBHOOK: Perfil para o usuário {user_id} não foi encontrado na tabela 'profiles'.")
             return False
         
-        # 2. Calcula o novo saldo
+
         current_balance = profile_res.data['balance']
-        # Converte explicitamente para float para evitar erros de tipo
+
         new_balance = float(current_balance) + float(amount)
         print(f"WEBHOOK: Saldo atual: {current_balance}, Valor a adicionar: {amount}, Novo saldo: {new_balance}")
 
         # 3. Atualiza o saldo na tabela Profiles
         update_res = supabase.table('profiles').update({'balance': new_balance}).eq('id', user_id).execute()
 
-        # Verifica se a atualização foi bem-sucedida (opcional, mas bom para log)
-        # O Supabase retorna os dados atualizados em update_res.data se for bem-sucedido
         if update_res.data:
              print(f"WEBHOOK: Saldo do usuário {user_id} atualizado para {new_balance} com sucesso!")
-             # Opcional: Atualizar o status da transação na tabela Transactions
-             # supabase.table('transactions').update({'status': 'Concluído'}).eq('external_id', payment_id).execute()
+
              return True
         else:
              print(f"ERRO DO WEBHOOK: Falha ao executar o update na tabela 'profiles' para o usuário {user_id}.")
@@ -77,7 +66,6 @@ def update_database_on_payment(supabase: Client, external_reference: str, amount
         
     except Exception as e:
         print(f"ERRO CRÍTICO DO WEBHOOK ao executar a atualização do saldo: {e}")
-        # Log detalhado do erro pode ser útil aqui
         import traceback
         traceback.print_exc()
         return False
