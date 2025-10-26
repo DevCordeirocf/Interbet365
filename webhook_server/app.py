@@ -2,10 +2,14 @@ import os
 import mercadopago
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+import os
+from pathlib import Path
 from supabase import create_client, Client
 
 # Carrega as variáveis de ambiente do arquivo .env
-load_dotenv()
+# Garante que o .env seja carregado da raiz do projeto (um nível acima do webhook_server)
+dotenv_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=dotenv_path)
 
 # ==============================================================================
 # LÓGICA DE BANCO DE DADOS (Específica para o Servidor Webhook)
